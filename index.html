@@ -299,7 +299,7 @@
                     </div>
                     <div>
                         <strong>Manual Override:</strong> 
-                        <input type="number" id="manualCarryForward" step="0.25" style="width: 60px;" placeholder="0" onchange="updateTotals()"><br>
+                        <input type="number" id="manualCarryForward" step="0.25" style="width: 60px;" placeholder="0" onchange="updateTotals(); saveData()"><br>
                         <strong>Carry Forward Out:</strong> <span id="carryForwardNext">0.00</span><br>
                         <strong>Final Overtime:</strong> <span id="finalOvertime">0.00</span>
                     </div>
@@ -652,7 +652,7 @@
             const monthStr = getCurrentMonth();
             const data = {};
             
-            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"]');
+            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"], input[type="month"]');
             inputs.forEach(input => {
                 if (input.value) {
                     data[input.id] = input.value;
