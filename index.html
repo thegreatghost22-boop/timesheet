@@ -403,11 +403,6 @@
                     <button class="btn btn-secondary" onclick="createBackup()">Create Backup</button>
                     <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
                 </div>
-                <div class="card">
-                    <h3>Cross-Month Data</h3>
-                    <button class="btn btn-info" onclick="syncCarryForwardData()">Sync Carry Forward Data</button>
-                    <p style="font-size: 12px; margin-top: 10px;">Automatically sets next month's carried forward hours from current month's carry forward out.</p>
-                </div>
             </div>
             
             <div class="card">
@@ -428,6 +423,8 @@
         const HOURLY_RATE = 23.00;
         const CONTRACT_HOURS_PER_WEEK = 32;
         const ANNUAL_HOLIDAY_DAYS = 28;
+
+        // REMOVED HARDCODED MONTH-SPECIFIC DEFAULTS - now all comes from saved data
 
         function showStatus(message, type) {
             const statusDiv = document.getElementById('statusMessage');
@@ -482,13 +479,9 @@
             const firstDay = new Date(year, month - 1, 1);
             const lastDay = new Date(year, month, 0);
             
-            // Set default carry forward values for specific months
+            // NO MORE HARDCODED DEFAULTS - just set to 0 initially
             const carriedForwardInput = document.getElementById('carriedForwardHours');
-            if (year === 2025 && month === 10) {
-                carriedForwardInput.value = '48';
-            } else {
-                carriedForwardInput.value = '0';
-            }
+            carriedForwardInput.value = '0';
             
             const tbody = document.getElementById('timesheetBody');
             tbody.innerHTML = '';
@@ -524,6 +517,7 @@
                 }
             }
             
+            // Load saved data AFTER generating the form - this will set the correct carry forward value
             loadSavedData();
             updateTotals();
         }
@@ -667,19 +661,19 @@
                 if (input.value !== '' && input.id) {
                     data[input.id] = input.value;
                 }
+                // Special handling for carry forward field - save even if empty/zero
+                if (input.id === 'carriedForwardHours' || input.id === 'manualCarryForward') {
+                    data[input.id] = input.value || '0';
+                }
             });
             
             localStorage.setItem('timesheet_' + monthStr, JSON.stringify(data));
-            
-            console.log('Saved data for ' + monthStr + ':', data);
             showStatus('Data saved successfully! (' + Object.keys(data).length + ' fields)', 'success');
         }
 
         function loadSavedData() {
             const monthStr = getCurrentMonth();
             const savedData = localStorage.getItem('timesheet_' + monthStr);
-            
-            console.log('Loading data for ' + monthStr + ':', savedData);
             
             if (savedData) {
                 const data = JSON.parse(savedData);
@@ -693,14 +687,6 @@
                         }
                     }
                 });
-                
-                // Log specific fields for debugging
-                if (data.manualCarryForward) {
-                    console.log('Loaded manual override:', data.manualCarryForward);
-                }
-                if (data.carriedForwardHours) {
-                    console.log('Loaded carried forward:', data.carriedForwardHours);
-                }
             }
         }
 
@@ -712,34 +698,6 @@
 
         function getAllMonthlyData() {
             return JSON.parse(localStorage.getItem('monthly_summaries') || '{}');
-        }
-
-        function syncCarryForwardData() {
-            const currentMonth = getCurrentMonth();
-            const parts = currentMonth.split('-');
-            let year = parseInt(parts[0]);
-            let month = parseInt(parts[1]);
-            
-            // Get next month
-            month++;
-            if (month > 12) {
-                month = 1;
-                year++;
-            }
-            
-            const nextMonth = year + '-' + String(month).padStart(2, '0');
-            const carryForwardOut = document.getElementById('carryForwardNext').textContent;
-            
-            if (carryForwardOut && parseFloat(carryForwardOut) > 0) {
-                // Save the carry forward value for next month
-                const nextMonthData = JSON.parse(localStorage.getItem('timesheet_' + nextMonth) || '{}');
-                nextMonthData.carriedForwardHours = carryForwardOut;
-                localStorage.setItem('timesheet_' + nextMonth, JSON.stringify(nextMonthData));
-                
-                showStatus('Carry forward data synced to ' + nextMonth + ': ' + carryForwardOut + ' hours', 'success');
-            } else {
-                showStatus('No carry forward hours to sync', 'error');
-            }
         }
 
         function updateDashboard() {
