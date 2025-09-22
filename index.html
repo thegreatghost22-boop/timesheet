@@ -652,19 +652,23 @@
             const monthStr = getCurrentMonth();
             const data = {};
             
-            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"], input[type="month"]');
+            // Get all form inputs
+            const inputs = document.querySelectorAll('input');
             inputs.forEach(input => {
-                if (input.value) {
+                if (input.value && input.id) {
                     data[input.id] = input.value;
                 }
             });
             
             localStorage.setItem('timesheet_' + monthStr, JSON.stringify(data));
+            console.log('Saved data for', monthStr, ':', data); // Debug log
         }
 
         function loadSavedData() {
             const monthStr = getCurrentMonth();
             const savedData = localStorage.getItem('timesheet_' + monthStr);
+            
+            console.log('Loading data for', monthStr, ':', savedData); // Debug log
             
             if (savedData) {
                 const data = JSON.parse(savedData);
@@ -678,6 +682,24 @@
                         }
                     }
                 });
+                
+                // Specifically handle manual carry forward
+                if (data.manualCarryForward) {
+                    const manualElement = document.getElementById('manualCarryForward');
+                    if (manualElement) {
+                        manualElement.value = data.manualCarryForward;
+                        console.log('Loaded manual override:', data.manualCarryForward); // Debug log
+                    }
+                }
+                
+                // Specifically handle carried forward hours
+                if (data.carriedForwardHours) {
+                    const carriedElement = document.getElementById('carriedForwardHours');
+                    if (carriedElement) {
+                        carriedElement.value = data.carriedForwardHours;
+                        console.log('Loaded carried forward:', data.carriedForwardHours); // Debug log
+                    }
+                }
             }
         }
 
