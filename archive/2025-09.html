@@ -301,7 +301,8 @@
                         <strong>Manual Override:</strong> 
                         <input type="number" id="manualCarryForward" step="0.25" style="width: 60px;" placeholder="0" onchange="updateTotals()"><br>
                         <strong>Carry Forward Out:</strong> <span id="carryForwardNext">0.00</span><br>
-                        <strong>Final Overtime:</strong> <span id="finalOvertime">0.00</span>
+                        <strong>Final Overtime:</strong> <span id="finalOvertime">0.00</span><br>
+                        <button class="btn btn-info" onclick="saveData()" style="margin-top: 10px; font-size: 12px; padding: 5px 10px;">Save Data</button>
                     </div>
                     <div>
                         <strong>Total Gross Pay:</strong><br>
@@ -652,19 +653,31 @@
             const monthStr = getCurrentMonth();
             const data = {};
             
-            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"]');
+            // Get all form inputs
+            const inputs = document.querySelectorAll('input');
             inputs.forEach(input => {
-                if (input.value) {
+                if (input.value && input.id) {
                     data[input.id] = input.value;
                 }
             });
             
+            // Make sure we capture the manual override specifically
+            const manualOverride = document.getElementById('manualCarryForward');
+            if (manualOverride && manualOverride.value) {
+                data['manualCarryForward'] = manualOverride.value;
+            }
+            
             localStorage.setItem('timesheet_' + monthStr, JSON.stringify(data));
+            
+            // Show confirmation message
+            showStatus('Data saved successfully! Includes ' + Object.keys(data).length + ' fields.', 'success');
         }
 
         function loadSavedData() {
             const monthStr = getCurrentMonth();
             const savedData = localStorage.getItem('timesheet_' + monthStr);
+            
+            console.log('Loading data for', monthStr, ':', savedData); // Debug log
             
             if (savedData) {
                 const data = JSON.parse(savedData);
@@ -678,6 +691,24 @@
                         }
                     }
                 });
+                
+                // Specifically handle manual carry forward
+                if (data.manualCarryForward) {
+                    const manualElement = document.getElementById('manualCarryForward');
+                    if (manualElement) {
+                        manualElement.value = data.manualCarryForward;
+                        console.log('Loaded manual override:', data.manualCarryForward); // Debug log
+                    }
+                }
+                
+                // Specifically handle carried forward hours
+                if (data.carriedForwardHours) {
+                    const carriedElement = document.getElementById('carriedForwardHours');
+                    if (carriedElement) {
+                        carriedElement.value = data.carriedForwardHours;
+                        console.log('Loaded carried forward:', data.carriedForwardHours); // Debug log
+                    }
+                }
             }
         }
 
