@@ -262,7 +262,7 @@
                 <div class="info-box">
                     <h3>Carried Forward</h3>
                     <div class="value">
-                        <input type="number" id="carriedForwardHours" value="0" step="0.25" onchange="updateTotals()" style="width: 80px; background: transparent; border: 1px solid white; color: white; text-align: center; border-radius: 4px;">
+                        <input type="number" id="carriedForwardHours" value="0" step="0.25" onchange="updateTotals(); saveData();" style="width: 80px; background: transparent; border: 1px solid white; color: white; text-align: center; border-radius: 4px;">
                     </div>
                     <div>Hours from previous month</div>
                 </div>
@@ -289,25 +289,24 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
                     <div>
                         <strong>Hours Worked:</strong> <span id="totalHours">0.00</span><br>
-                        <strong>Overtime Hours:</strong> <span id="overtimeHours">0.00</span><br>
-                        <strong>Holiday Hours:</strong> <span id="currentHolidayHours">0.00</span>
+                        <strong>Contract Hours:</strong> <span id="contractHours">0.00</span><br>
+                        <strong>Overtime Hours:</strong> <span id="overtimeHours">0.00</span>
                     </div>
                     <div>
+                        <strong>Holiday Hours:</strong> <span id="currentHolidayHours">0.00</span><br>
                         <strong>Carried Forward In:</strong> <span id="displayCarriedForward">0.00</span><br>
-                        <strong>Holiday Offset Applied:</strong> <span id="holidayOffset">0.00</span><br>
-                        <strong>Net Holiday Pay:</strong> <span id="netHolidayHours">0.00</span>
+                        <strong>Holiday Offset Applied:</strong> <span id="holidayOffset">0.00</span>
                     </div>
                     <div>
                         <strong>Manual Override:</strong> 
-                        <input type="number" id="manualCarryForward" step="0.25" style="width: 60px;" placeholder="0" onchange="updateTotals()"><br>
-                        <strong>Carry Forward Out:</strong> <span id="carryForwardNext">0.00</span><br>
-                        <strong>Final Overtime:</strong> <span id="finalOvertime">0.00</span><br>
-                        <button class="btn btn-info" onclick="saveData()" style="margin-top: 10px; font-size: 12px; padding: 5px 10px;">Save Data</button>
+                        <input type="number" id="manualCarryForward" step="0.25" style="width: 60px;" placeholder="0" onchange="updateTotals(); saveData();"><br>
+                        <button class="btn btn-info" onclick="saveData()" style="margin-top: 5px; font-size: 12px; padding: 5px 10px;">Save Data</button><br>
+                        <strong>Carry Forward Out:</strong> <span id="carryForwardNext">0.00</span>
                     </div>
                     <div>
+                        <strong>Net Holiday Hours:</strong> <span id="netHolidayHours">0.00</span><br>
                         <strong>Total Gross Pay:</strong><br>
-                        <span style="font-size: 1.5em; color: #2c3e50;">£<span id="totalPay">0.00</span></span><br>
-                        <small>Working hours + Net holiday pay</small>
+                        <span style="font-size: 1.5em; color: #2c3e50;">£<span id="totalPay">0.00</span></span>
                     </div>
                 </div>
             </div>
@@ -356,7 +355,8 @@
                             <th>Month</th>
                             <th>Hours Worked</th>
                             <th>Holiday Hours</th>
-                            <th>Overtime</th>
+                            <th>Carry Forward In</th>
+                            <th>Carry Forward Out</th>
                             <th>Gross Pay</th>
                         </tr>
                     </thead>
@@ -403,6 +403,11 @@
                     <button class="btn btn-secondary" onclick="createBackup()">Create Backup</button>
                     <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
                 </div>
+                <div class="card">
+                    <h3>Cross-Month Data</h3>
+                    <button class="btn btn-info" onclick="syncCarryForwardData()">Sync Carry Forward Data</button>
+                    <p style="font-size: 12px; margin-top: 10px;">Automatically sets next month's carried forward hours from current month's carry forward out.</p>
+                </div>
             </div>
             
             <div class="card">
@@ -424,19 +429,19 @@
         const CONTRACT_HOURS_PER_WEEK = 32;
         const ANNUAL_HOLIDAY_DAYS = 28;
 
-        function showStatus(message, type = 'success') {
+        function showStatus(message, type) {
             const statusDiv = document.getElementById('statusMessage');
-            statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
-            setTimeout(() => {
+            statusDiv.innerHTML = '<div class="status-message status-' + type + '">' + message + '</div>';
+            setTimeout(function() {
                 statusDiv.innerHTML = '';
             }, 5000);
         }
 
         function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
+            document.querySelectorAll('.tab-content').forEach(function(tab) {
                 tab.classList.remove('active');
             });
-            document.querySelectorAll('.nav-tab').forEach(tab => {
+            document.querySelectorAll('.nav-tab').forEach(function(tab) {
                 tab.classList.remove('active');
             });
             
@@ -471,10 +476,13 @@
 
         function generateTimesheet() {
             const monthStr = getCurrentMonth();
-            const [year, month] = monthStr.split('-').map(Number);
+            const parts = monthStr.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
             const firstDay = new Date(year, month - 1, 1);
             const lastDay = new Date(year, month, 0);
             
+            // Set default carry forward values for specific months
             const carriedForwardInput = document.getElementById('carriedForwardHours');
             if (year === 2025 && month === 10) {
                 carriedForwardInput.value = '48';
@@ -497,11 +505,11 @@
                 
                 const row = document.createElement('tr');
                 row.innerHTML = '<td class="date-cell">' + dayName + ', ' + dayDate + '</td>' +
-                    '<td><input type="time" class="time-input" id="timeIn_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\')"></td>' +
-                    '<td><input type="time" class="time-input" id="timeOut_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\')"></td>' +
+                    '<td><input type="time" class="time-input" id="timeIn_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\'); saveData();"></td>' +
+                    '<td><input type="time" class="time-input" id="timeOut_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\'); saveData();"></td>' +
                     '<td class="hours-cell"><span id="hours_' + dateStr + '">0.00</span></td>' +
-                    '<td class="holiday-cell"><input type="number" class="time-input" id="holiday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals()"></td>' +
-                    '<td class="comments-cell"><input type="text" id="comments_' + dateStr + '" placeholder="Notes..." style="width: 100%; border: none; background: transparent;" onchange="saveData()"></td>';
+                    '<td class="holiday-cell"><input type="number" class="time-input" id="holiday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
+                    '<td class="comments-cell"><input type="text" id="comments_' + dateStr + '" placeholder="Notes..." style="width: 100%; border: none; background: transparent;" onchange="saveData();"></td>';
                 tbody.appendChild(row);
                 
                 if (dayOfWeek === 5 || date.getTime() === lastDay.getTime()) {
@@ -521,8 +529,13 @@
         }
 
         function calculateHours(dateStr) {
-            const timeIn = document.getElementById('timeIn_' + dateStr).value;
-            const timeOut = document.getElementById('timeOut_' + dateStr).value;
+            const timeInElement = document.getElementById('timeIn_' + dateStr);
+            const timeOutElement = document.getElementById('timeOut_' + dateStr);
+            
+            if (!timeInElement || !timeOutElement) return;
+            
+            const timeIn = timeInElement.value;
+            const timeOut = timeOutElement.value;
             
             if (timeIn && timeOut) {
                 const startTime = new Date('2000-01-01T' + timeIn + ':00');
@@ -535,18 +548,25 @@
                 const diffMs = endTime - startTime;
                 const totalHours = diffMs / (1000 * 60 * 60);
                 
-                document.getElementById('hours_' + dateStr).textContent = totalHours.toFixed(2);
+                const hoursElement = document.getElementById('hours_' + dateStr);
+                if (hoursElement) {
+                    hoursElement.textContent = totalHours.toFixed(2);
+                }
             } else {
-                document.getElementById('hours_' + dateStr).textContent = '0.00';
+                const hoursElement = document.getElementById('hours_' + dateStr);
+                if (hoursElement) {
+                    hoursElement.textContent = '0.00';
+                }
             }
             
             updateTotals();
-            saveData();
         }
 
         function updateTotals() {
             const monthStr = getCurrentMonth();
-            const [year, month] = monthStr.split('-').map(Number);
+            const parts = monthStr.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
             const firstDay = new Date(year, month - 1, 1);
             const lastDay = new Date(year, month, 0);
             
@@ -593,59 +613,47 @@
             const carriedForwardHours = carriedForwardElement ? parseFloat(carriedForwardElement.value) || 0 : 0;
             const manualCarryForward = manualCarryForwardElement ? parseFloat(manualCarryForwardElement.value) || 0 : 0;
             
-            const workingDays = countWorkingDaysInMonth(year, month - 1);
-            const expectedWeeks = workingDays / 5;
-            const contractExpectedHours = expectedWeeks * CONTRACT_HOURS_PER_WEEK;
-            const overtimeTotal = Math.max(0, totalWorkedHours - contractExpectedHours);
+            const workingDaysInCurrentMonth = countWorkingDaysInMonth(year, month - 1);
+            const contractHours = (workingDaysInCurrentMonth / 5) * CONTRACT_HOURS_PER_WEEK;
+            const overtimeHours = Math.max(0, totalWorkedHours - contractHours);
             
-            const offsetAgainstCarriedForward = Math.min(overtimeTotal, carriedForwardHours);
-            const remainingCarriedForward = Math.max(0, carriedForwardHours - offsetAgainstCarriedForward);
-            const overtimeAfterCarriedForwardOffset = Math.max(0, overtimeTotal - offsetAgainstCarriedForward);
+            const holidayOffsetApplied = Math.min(overtimeHours, carriedForwardHours + totalHolidayHours);
+            const carryForwardOut = manualCarryForward > 0 ? manualCarryForward : Math.max(0, (carriedForwardHours + totalHolidayHours) - overtimeHours);
+            const netHolidayHours = Math.max(0, (carriedForwardHours + totalHolidayHours) - holidayOffsetApplied - carryForwardOut);
             
-            const offsetAgainstCurrentHoliday = Math.min(overtimeAfterCarriedForwardOffset, totalHolidayHours);
-            const currentMonthNetHoliday = Math.max(0, totalHolidayHours - offsetAgainstCurrentHoliday);
-            const finalRemainingOvertime = Math.max(0, overtimeAfterCarriedForwardOffset - offsetAgainstCurrentHoliday);
+            const totalPay = (totalWorkedHours + netHolidayHours) * HOURLY_RATE;
             
-            const carryForwardToNext = manualCarryForward > 0 ? manualCarryForward : currentMonthNetHoliday;
-            
-            let netHolidayPayThisMonth;
-            if (manualCarryForward > 0) {
-                netHolidayPayThisMonth = remainingCarriedForward + Math.max(0, currentMonthNetHoliday - manualCarryForward);
-            } else {
-                netHolidayPayThisMonth = remainingCarriedForward + currentMonthNetHoliday;
-            }
-            
-            const totalHolidayOffset = offsetAgainstCarriedForward + offsetAgainstCurrentHoliday;
-            
-            const updateElement = (id, value) => {
+            // Update display elements
+            const updateElement = function(id, value) {
                 const element = document.getElementById(id);
                 if (element) element.textContent = value;
             };
             
             updateElement('totalHours', totalWorkedHours.toFixed(2));
-            updateElement('overtimeHours', overtimeTotal.toFixed(2));
+            updateElement('contractHours', contractHours.toFixed(2));
+            updateElement('overtimeHours', overtimeHours.toFixed(2));
             updateElement('currentHolidayHours', totalHolidayHours.toFixed(2));
-            updateElement('netHolidayHours', netHolidayPayThisMonth.toFixed(2));
-            updateElement('totalPay', ((totalWorkedHours + netHolidayPayThisMonth) * HOURLY_RATE).toFixed(2));
-            
             updateElement('displayCarriedForward', carriedForwardHours.toFixed(2));
-            updateElement('holidayOffset', totalHolidayOffset.toFixed(2));
-            updateElement('carryForwardNext', carryForwardToNext.toFixed(2));
-            updateElement('finalOvertime', finalRemainingOvertime.toFixed(2));
+            updateElement('holidayOffset', holidayOffsetApplied.toFixed(2));
+            updateElement('netHolidayHours', netHolidayHours.toFixed(2));
+            updateElement('carryForwardNext', carryForwardOut.toFixed(2));
+            updateElement('totalPay', totalPay.toFixed(2));
             
             updateElement('submissionHours', totalWorkedHours.toFixed(2));
             updateElement('submissionPay', (totalWorkedHours * HOURLY_RATE).toFixed(2));
-            updateElement('submissionHolidayPay', (netHolidayPayThisMonth * HOURLY_RATE).toFixed(2));
-            updateElement('submissionTotal', ((totalWorkedHours + netHolidayPayThisMonth) * HOURLY_RATE).toFixed(2));
+            updateElement('submissionHolidayPay', (netHolidayHours * HOURLY_RATE).toFixed(2));
+            updateElement('submissionTotal', totalPay.toFixed(2));
             
             updateElement('holidaysRemaining', ANNUAL_HOLIDAY_DAYS.toString());
             
             saveMonthlyData(monthStr, {
                 workedHours: totalWorkedHours,
                 holidayHours: totalHolidayHours,
-                overtimeHours: overtimeTotal,
-                grossPay: (totalWorkedHours + netHolidayPayThisMonth) * HOURLY_RATE,
-                carryForward: carryForwardToNext
+                carriedForwardIn: carriedForwardHours,
+                carriedForwardOut: carryForwardOut,
+                manualOverride: manualCarryForward,
+                overtimeHours: overtimeHours,
+                grossPay: totalPay
             });
         }
 
@@ -653,35 +661,29 @@
             const monthStr = getCurrentMonth();
             const data = {};
             
-            // Get all form inputs
-            const inputs = document.querySelectorAll('input');
-            inputs.forEach(input => {
-                if (input.value && input.id) {
+            // Get all inputs specifically
+            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"], input[type="month"]');
+            inputs.forEach(function(input) {
+                if (input.value !== '' && input.id) {
                     data[input.id] = input.value;
                 }
             });
             
-            // Make sure we capture the manual override specifically
-            const manualOverride = document.getElementById('manualCarryForward');
-            if (manualOverride && manualOverride.value) {
-                data['manualCarryForward'] = manualOverride.value;
-            }
-            
             localStorage.setItem('timesheet_' + monthStr, JSON.stringify(data));
             
-            // Show confirmation message
-            showStatus('Data saved successfully! Includes ' + Object.keys(data).length + ' fields.', 'success');
+            console.log('Saved data for ' + monthStr + ':', data);
+            showStatus('Data saved successfully! (' + Object.keys(data).length + ' fields)', 'success');
         }
 
         function loadSavedData() {
             const monthStr = getCurrentMonth();
             const savedData = localStorage.getItem('timesheet_' + monthStr);
             
-            console.log('Loading data for', monthStr, ':', savedData); // Debug log
+            console.log('Loading data for ' + monthStr + ':', savedData);
             
             if (savedData) {
                 const data = JSON.parse(savedData);
-                Object.keys(data).forEach(id => {
+                Object.keys(data).forEach(function(id) {
                     const element = document.getElementById(id);
                     if (element) {
                         element.value = data[id];
@@ -692,22 +694,12 @@
                     }
                 });
                 
-                // Specifically handle manual carry forward
+                // Log specific fields for debugging
                 if (data.manualCarryForward) {
-                    const manualElement = document.getElementById('manualCarryForward');
-                    if (manualElement) {
-                        manualElement.value = data.manualCarryForward;
-                        console.log('Loaded manual override:', data.manualCarryForward); // Debug log
-                    }
+                    console.log('Loaded manual override:', data.manualCarryForward);
                 }
-                
-                // Specifically handle carried forward hours
                 if (data.carriedForwardHours) {
-                    const carriedElement = document.getElementById('carriedForwardHours');
-                    if (carriedElement) {
-                        carriedElement.value = data.carriedForwardHours;
-                        console.log('Loaded carried forward:', data.carriedForwardHours); // Debug log
-                    }
+                    console.log('Loaded carried forward:', data.carriedForwardHours);
                 }
             }
         }
@@ -722,6 +714,34 @@
             return JSON.parse(localStorage.getItem('monthly_summaries') || '{}');
         }
 
+        function syncCarryForwardData() {
+            const currentMonth = getCurrentMonth();
+            const parts = currentMonth.split('-');
+            let year = parseInt(parts[0]);
+            let month = parseInt(parts[1]);
+            
+            // Get next month
+            month++;
+            if (month > 12) {
+                month = 1;
+                year++;
+            }
+            
+            const nextMonth = year + '-' + String(month).padStart(2, '0');
+            const carryForwardOut = document.getElementById('carryForwardNext').textContent;
+            
+            if (carryForwardOut && parseFloat(carryForwardOut) > 0) {
+                // Save the carry forward value for next month
+                const nextMonthData = JSON.parse(localStorage.getItem('timesheet_' + nextMonth) || '{}');
+                nextMonthData.carriedForwardHours = carryForwardOut;
+                localStorage.setItem('timesheet_' + nextMonth, JSON.stringify(nextMonthData));
+                
+                showStatus('Carry forward data synced to ' + nextMonth + ': ' + carryForwardOut + ' hours', 'success');
+            } else {
+                showStatus('No carry forward hours to sync', 'error');
+            }
+        }
+
         function updateDashboard() {
             const allData = getAllMonthlyData();
             const currentYear = new Date().getFullYear();
@@ -730,8 +750,9 @@
             let ytdEarnings = 0;
             let monthCount = 0;
             
-            Object.keys(allData).forEach(month => {
-                const [year] = month.split('-').map(Number);
+            Object.keys(allData).forEach(function(month) {
+                const parts = month.split('-');
+                const year = parseInt(parts[0]);
                 if (year === currentYear) {
                     const data = allData[month];
                     ytdHours += data.workedHours || 0;
@@ -750,11 +771,11 @@
             
             const sortedMonths = Object.keys(allData).sort().reverse().slice(0, 12);
             if (sortedMonths.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5">No data available yet. Start entering timesheet data to see summaries.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6">No data available yet. Start entering timesheet data to see summaries.</td></tr>';
                 return;
             }
             
-            sortedMonths.forEach(month => {
+            sortedMonths.forEach(function(month) {
                 const data = allData[month];
                 const row = document.createElement('tr');
                 const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
@@ -762,7 +783,8 @@
                 row.innerHTML = '<td>' + monthName + '</td>' +
                     '<td>' + (data.workedHours || 0).toFixed(2) + '</td>' +
                     '<td>' + (data.holidayHours || 0).toFixed(2) + '</td>' +
-                    '<td>' + (data.overtimeHours || 0).toFixed(2) + '</td>' +
+                    '<td>' + (data.carriedForwardIn || 0).toFixed(2) + '</td>' +
+                    '<td>' + (data.carriedForwardOut || 0).toFixed(2) + '</td>' +
                     '<td>£' + (data.grossPay || 0).toFixed(2) + '</td>';
                 tbody.appendChild(row);
             });
@@ -808,14 +830,15 @@
             
             if (monthlyData.length > 0) {
                 html += '<table class="data-table">';
-                html += '<thead><tr><th>Month</th><th>Hours</th><th>Holiday</th><th>Overtime</th><th>Gross Pay</th></tr></thead><tbody>';
+                html += '<thead><tr><th>Month</th><th>Hours</th><th>Holiday</th><th>Carry In</th><th>Carry Out</th><th>Gross Pay</th></tr></thead><tbody>';
                 
-                monthlyData.forEach(month => {
+                monthlyData.forEach(function(month) {
                     html += '<tr>';
                     html += '<td>' + month.month + '</td>';
                     html += '<td>' + (month.workedHours || 0).toFixed(2) + '</td>';
                     html += '<td>' + (month.holidayHours || 0).toFixed(2) + '</td>';
-                    html += '<td>' + (month.overtimeHours || 0).toFixed(2) + '</td>';
+                    html += '<td>' + (month.carriedForwardIn || 0).toFixed(2) + '</td>';
+                    html += '<td>' + (month.carriedForwardOut || 0).toFixed(2) + '</td>';
                     html += '<td>£' + (month.grossPay || 0).toFixed(2) + '</td>';
                     html += '</tr>';
                 });
@@ -837,15 +860,17 @@
             
             if (Object.keys(allData).length > 0) {
                 html += '<table class="data-table">';
-                html += '<thead><tr><th>Month</th><th>Hours</th><th>Earnings</th><th>Status</th></tr></thead><tbody>';
+                html += '<thead><tr><th>Month</th><th>Hours</th><th>Carry In</th><th>Carry Out</th><th>Earnings</th><th>Status</th></tr></thead><tbody>';
                 
-                Object.keys(allData).sort().reverse().forEach(month => {
+                Object.keys(allData).sort().reverse().forEach(function(month) {
                     const data = allData[month];
                     const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
                     
                     html += '<tr>';
                     html += '<td>' + monthName + '</td>';
                     html += '<td>' + (data.workedHours || 0).toFixed(2) + '</td>';
+                    html += '<td>' + (data.carriedForwardIn || 0).toFixed(2) + '</td>';
+                    html += '<td>' + (data.carriedForwardOut || 0).toFixed(2) + '</td>';
                     html += '<td>£' + (data.grossPay || 0).toFixed(2) + '</td>';
                     html += '<td>Stored Locally</td>';
                     html += '</tr>';
@@ -873,7 +898,7 @@
                 timesheets: allTimesheet,
                 summaries: allSummaries,
                 exportDate: new Date().toISOString(),
-                version: '2.0'
+                version: '3.0'
             };
             
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -881,7 +906,7 @@
             link.href = URL.createObjectURL(blob);
             link.download = 'Wendy_Ballard_Complete_Data_' + new Date().toISOString().split('T')[0] + '.json';
             link.click();
-            URL.revokeObjectURL(link);
+            URL.revokeObjectURL(link.href);
             
             showStatus('All data exported successfully!', 'success');
         }
@@ -891,7 +916,7 @@
             if (!year) return;
             
             const allData = getAllMonthlyData();
-            let csv = 'Month,Hours Worked,Holiday Hours,Overtime Hours,Gross Pay\n';
+            let csv = 'Month,Hours Worked,Holiday Hours,Carry Forward In,Carry Forward Out,Overtime Hours,Gross Pay\n';
             
             for (let month = 1; month <= 12; month++) {
                 const monthKey = year + '-' + String(month).padStart(2, '0');
@@ -902,6 +927,8 @@
                     csv += monthName + ',' + 
                            (data.workedHours || 0).toFixed(2) + ',' + 
                            (data.holidayHours || 0).toFixed(2) + ',' + 
+                           (data.carriedForwardIn || 0).toFixed(2) + ',' + 
+                           (data.carriedForwardOut || 0).toFixed(2) + ',' + 
                            (data.overtimeHours || 0).toFixed(2) + ',' + 
                            (data.grossPay || 0).toFixed(2) + '\n';
                 }
@@ -912,14 +939,16 @@
             link.href = URL.createObjectURL(blob);
             link.download = 'Wendy_Ballard_Annual_' + year + '.csv';
             link.click();
-            URL.revokeObjectURL(link);
+            URL.revokeObjectURL(link.href);
             
             showStatus('Annual CSV exported successfully!', 'success');
         }
 
         function generateCSV() {
             const monthStr = getCurrentMonth();
-            const [year, month] = monthStr.split('-').map(Number);
+            const parts = monthStr.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
             const monthName = new Date(year, month - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
             
             let csv = 'Date,Day,Time In,Time Out,Hours Worked,Holiday Hours,Comments\n';
@@ -953,8 +982,8 @@
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'Wendy_Ballard_Timesheet_' + monthName.replace(' ', '_') + '.csv');
+            link.href = url;
+            link.download = 'Wendy_Ballard_Timesheet_' + monthName.replace(' ', '_') + '.csv';
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -979,7 +1008,7 @@
                     const data = JSON.parse(e.target.result);
                     
                     if (data.timesheets) {
-                        Object.keys(data.timesheets).forEach(key => {
+                        Object.keys(data.timesheets).forEach(function(key) {
                             localStorage.setItem(key, JSON.stringify(data.timesheets[key]));
                         });
                     }
@@ -1020,11 +1049,13 @@
 
         function printTimesheet() {
             const monthStr = getCurrentMonth();
-            const [year, month] = monthStr.split('-').map(Number);
+            const parts = monthStr.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
             const monthName = new Date(year, month - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
             
             let printHtml = '<!DOCTYPE html><html><head><title>Timesheet - ' + monthName + '</title>';
-            printHtml += '<style>body{font-family:Arial,sans-serif;margin:20px;font-size:14px;}h1{color:#2c3e50;text-align:center;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border:1px solid #000;padding:8px;text-align:center;}th{background-color:#c9daf8;font-weight:bold;}.date-cell{text-align:left;background-color:#f8f9fa;font-weight:bold;}.week-total{background-color:#d1ecf1;font-weight:bold;}.summary{margin-top:30px;border-top:2px solid #4CAF50;padding-top:20px;}@media print{body{margin:10px;}}</style>';
+            printHtml += '<style>body{font-family:Arial,sans-serif;margin:20px;font-size:12px;}h1{color:#2c3e50;text-align:center;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border:1px solid #000;padding:6px;text-align:center;font-size:11px;}th{background-color:#c9daf8;font-weight:bold;}.date-cell{text-align:left;background-color:#f8f9fa;font-weight:bold;}.week-total{background-color:#d1ecf1;font-weight:bold;}.summary{margin-top:30px;border-top:2px solid #4CAF50;padding-top:20px;}</style>';
             printHtml += '</head><body><h1>Wendy Ballard - Timesheet for ' + monthName + '</h1><table><tr><th>Date</th><th>Time In</th><th>Time Out</th><th>Hours</th><th>Holiday</th><th>Comments</th></tr>';
             
             const firstDay = new Date(year, month - 1, 1);
@@ -1071,21 +1102,29 @@
             const totalPay = document.getElementById('totalPay').textContent;
             const carriedForward = document.getElementById('displayCarriedForward').textContent;
             const carryForwardNext = document.getElementById('carryForwardNext').textContent;
+            const manualOverride = document.getElementById('manualCarryForward').value || '0';
             
-            printHtml += '</table><div class="summary"><h3>Monthly Summary</h3><p><strong>Total Hours Worked:</strong> ' + totalHours + '</p><p><strong>Net Holiday Pay:</strong> ' + netHoliday + ' hours</p><p><strong>Total Gross Pay:</strong> £' + totalPay + '</p><p><strong>Carried Forward In:</strong> ' + carriedForward + ' hours</p><p><strong>Carry Forward Out:</strong> ' + carryForwardNext + ' hours</p><p><strong>Rate:</strong> £23.00/hour</p></div></body></html>';
+            printHtml += '</table><div class="summary"><h3>Monthly Summary</h3><p><strong>Total Hours Worked:</strong> ' + totalHours + '</p><p><strong>Net Holiday Hours:</strong> ' + netHoliday + ' hours</p><p><strong>Total Gross Pay:</strong> £' + totalPay + '</p><p><strong>Carried Forward In:</strong> ' + carriedForward + ' hours</p><p><strong>Manual Override:</strong> ' + manualOverride + ' hours</p><p><strong>Carry Forward Out:</strong> ' + carryForwardNext + ' hours</p><p><strong>Rate:</strong> £23.00/hour</p></div></body></html>';
             
-            const blob = new Blob([printHtml], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'Wendy_Ballard_Timesheet_' + monthName.replace(' ', '_') + '_Printable.html';
-            link.click();
-            URL.revokeObjectURL(url);
-            
-            showStatus('Printable timesheet downloaded! Open the HTML file and use Ctrl+P (or Cmd+P) to print.', 'success');
+            try {
+                const blob = new Blob([printHtml], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'Wendy_Ballard_Timesheet_' + monthName.replace(' ', '_') + '_Printable.html';
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                showStatus('Printable timesheet downloaded! Open the HTML file and use Ctrl+P to print.', 'success');
+            } catch (error) {
+                showStatus('Print export failed: ' + error.message, 'error');
+            }
         }
 
-        generateTimesheet();
+        // Initialize the timesheet when page loads
+        window.onload = function() {
+            generateTimesheet();
+        };
     </script>
 </body>
 </html>
