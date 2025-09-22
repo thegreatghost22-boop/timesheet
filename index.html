@@ -299,9 +299,10 @@
                     </div>
                     <div>
                         <strong>Manual Override:</strong> 
-                        <input type="number" id="manualCarryForward" step="0.25" style="width: 60px;" placeholder="0" onchange="updateTotals(); saveData()"><br>
+                        <input type="number" id="manualCarryForward" step="0.25" style="width: 60px;" placeholder="0" onchange="updateTotals()"><br>
                         <strong>Carry Forward Out:</strong> <span id="carryForwardNext">0.00</span><br>
-                        <strong>Final Overtime:</strong> <span id="finalOvertime">0.00</span>
+                        <strong>Final Overtime:</strong> <span id="finalOvertime">0.00</span><br>
+                        <button class="btn btn-info" onclick="saveData()" style="margin-top: 10px; font-size: 12px; padding: 5px 10px;">Save Data</button>
                     </div>
                     <div>
                         <strong>Total Gross Pay:</strong><br>
@@ -660,8 +661,16 @@
                 }
             });
             
+            // Make sure we capture the manual override specifically
+            const manualOverride = document.getElementById('manualCarryForward');
+            if (manualOverride && manualOverride.value) {
+                data['manualCarryForward'] = manualOverride.value;
+            }
+            
             localStorage.setItem('timesheet_' + monthStr, JSON.stringify(data));
-            console.log('Saved data for', monthStr, ':', data); // Debug log
+            
+            // Show confirmation message
+            showStatus('Data saved successfully! Includes ' + Object.keys(data).length + ' fields.', 'success');
         }
 
         function loadSavedData() {
