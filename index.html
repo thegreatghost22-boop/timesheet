@@ -341,7 +341,7 @@
 
             <div class="legend">
                 <span class="legend-item personal-holiday-cell"><strong>Personal Holiday</strong> - Wendy's choice, reduces 28-day entitlement</span>
-                <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> - Family travels, creates TOIL</span>
+                <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> - Family travels (check TOIL box to create debt)</span>
                 <span class="legend-item bank-holiday-cell"><strong>Bank Holiday</strong> - Statutory holiday</span>
                 <span class="legend-item toil-usage-cell"><strong>TOIL Usage</strong> - Using accumulated TOIL balance</span>
             </div>
@@ -606,7 +606,7 @@
                     '<td><input type="time" class="time-input" id="timeOut_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\'); saveData();"></td>' +
                     '<td class="hours-cell"><span id="hours_' + dateStr + '">0.00</span></td>' +
                     '<td class="personal-holiday-cell"><input type="number" class="time-input" id="personalHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
-                    '<td class="family-holiday-cell"><input type="number" class="time-input" id="familyHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
+                    '<td class="family-holiday-cell"><input type="number" class="time-input" id="familyHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();" style="width: 50px;"><br><input type="checkbox" id="toilToggle_' + dateStr + '" onchange="updateTotals(); saveData();" style="margin-top: 2px;"><label for="toilToggle_' + dateStr + '" style="font-size: 10px; margin-left: 2px;">TOIL</label></td>' +
                     '<td class="toil-usage-cell"><input type="number" class="time-input" id="toilUsage_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
                     '<td class="comments-cell"><input type="text" id="comments_' + dateStr + '" placeholder="Notes..." style="width: 100%; border: none; background: transparent;" onchange="saveData();"></td>';
                 tbody.appendChild(row);
@@ -675,6 +675,7 @@
             let totalPersonalHolidayHours = 0;
             let totalFamilyHolidayHours = 0;
             let totalToilUsageHours = 0;
+            let totalToilCreatingHours = 0; // Only family holiday hours with TOIL checkbox checked
             let weekNumber = 1;
             let weekHours = 0;
             let weekPersonalHoliday = 0;
@@ -690,12 +691,14 @@
                 const personalHolidayElement = document.getElementById('personalHoliday_' + dateStr);
                 const familyHolidayElement = document.getElementById('familyHoliday_' + dateStr);
                 const toilUsageElement = document.getElementById('toilUsage_' + dateStr);
+                const toilToggleElement = document.getElementById('toilToggle_' + dateStr);
                 
                 if (hoursElement && personalHolidayElement && familyHolidayElement && toilUsageElement) {
                     const dayHours = parseFloat(hoursElement.textContent) || 0;
                     const dayPersonalHoliday = parseFloat(personalHolidayElement.value) || 0;
                     const dayFamilyHoliday = parseFloat(familyHolidayElement.value) || 0;
                     const dayToilUsage = parseFloat(toilUsageElement.value) || 0;
+                    const isToilCreating = toilToggleElement ? toilToggleElement.checked : false;
                     
                     totalWorkedHours += dayHours;
                     totalPersonalHolidayHours += dayPersonalHoliday;
@@ -705,6 +708,11 @@
                     weekPersonalHoliday += dayPersonalHoliday;
                     weekFamilyHoliday += dayFamilyHoliday;
                     weekToilUsage += dayToilUsage;
+                    
+                    // Only count as TOIL-creating if checkbox is checked
+                    if (isToilCreating && dayFamilyHoliday > 0) {
+                        totalToilCreatingHours += dayFamilyHoliday;
+                    }
                 }
                 
                 if (dayOfWeek === 5 || date.getTime() === lastDay.getTime()) {
@@ -734,16 +742,16 @@
             const familyHolidayDays = familyHolidayDaysElement ? parseFloat(familyHolidayDaysElement.value) || 0 : 0;
             const currentBankHolidays = currentBankHolidaysElement ? parseFloat(currentBankHolidaysElement.value) || 0 : 0;
             
-            // Add family holiday days to family holiday hours from timesheet
+            // Add family holiday days to TOIL-creating hours from timesheet
             const totalFamilyHolidayFromDays = familyHolidayDays * 6.4; // 32 hours / 5 days = 6.4 hours per day
-            const combinedFamilyHolidayHours = totalFamilyHolidayHours + totalFamilyHolidayFromDays;
+            const combinedToilCreatingHours = totalToilCreatingHours + totalFamilyHolidayFromDays;
             
             const workingDaysInCurrentMonth = countWorkingDaysInMonth(year, month - 1);
             const contractHours = (workingDaysInCurrentMonth / 5) * CONTRACT_HOURS_PER_WEEK;
             const overtimeHours = Math.max(0, totalWorkedHours - contractHours);
             
             // TOIL Calculations
-            const currentToilDebt = toilFromPrevious + combinedFamilyHolidayHours;
+            const currentToilDebt = toilFromPrevious + combinedToilCreatingHours;
             const toilOffsetByOvertime = Math.min(overtimeHours, currentToilDebt);
             const remainingOvertimeAfterToilOffset = overtimeHours - toilOffsetByOvertime;
             const remainingToilDebt = Math.max(0, currentToilDebt - toilOffsetByOvertime);
@@ -792,7 +800,8 @@
             saveMonthlyData(monthStr, {
                 workedHours: totalWorkedHours,
                 personalHolidayHours: totalPersonalHolidayHours,
-                familyHolidayHours: combinedFamilyHolidayHours,
+                familyHolidayHours: totalFamilyHolidayHours,
+                toilCreatingHours: combinedToilCreatingHours,
                 toilUsageHours: totalToilUsageHours,
                 bankHolidays: currentBankHolidays,
                 toilBalance: netToilBalance,
@@ -805,9 +814,11 @@
             const monthStr = getCurrentMonth();
             const data = {};
             
-            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"], input[type="month"]');
+            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"], input[type="month"], input[type="checkbox"]');
             inputs.forEach(function(input) {
-                if (input.value !== '' && input.id) {
+                if (input.type === 'checkbox') {
+                    data[input.id] = input.checked;
+                } else if (input.value !== '' && input.id) {
                     data[input.id] = input.value;
                 }
                 if (input.id === 'toilFromPrevious' || input.id === 'familyHolidayDays' || input.id === 'currentBankHolidays') {
@@ -828,7 +839,11 @@
                 Object.keys(data).forEach(function(id) {
                     const element = document.getElementById(id);
                     if (element) {
-                        element.value = data[id];
+                        if (element.type === 'checkbox') {
+                            element.checked = data[id] === true;
+                        } else {
+                            element.value = data[id];
+                        }
                         if (id.indexOf('timeIn_') !== -1 || id.indexOf('timeOut_') !== -1) {
                             const dateStr = id.split('_')[1];
                             calculateHours(dateStr);
