@@ -889,13 +889,14 @@
                 const row = document.createElement('tr');
                 const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
                 
-                row.innerHTML = '<td>' + monthName + '</td>' +
+                row.innerHTML = '<td><a href="javascript:void(0)" onclick="switchToMonth(\'' + month + '\')" style="color: #4CAF50; text-decoration: none; font-weight: bold;">' + monthName + '</a></td>' +
                     '<td>' + (data.workedHours || 0).toFixed(2) + '</td>' +
                     '<td>' + ((data.personalHolidayHours || 0) / 8).toFixed(2) + '</td>' +
                     '<td>' + ((data.familyHolidayHours || 0) / 8).toFixed(2) + '</td>' +
                     '<td>' + (data.bankHolidays || 0).toFixed(1) + '</td>' +
                     '<td>' + (data.toilBalance || 0).toFixed(1) + '</td>' +
                     '<td>£' + (data.grossPay || 0).toFixed(2) + '</td>';
+                row.style.cursor = 'pointer';
                 tbody.appendChild(row);
             });
         }
@@ -1266,6 +1267,24 @@
             } catch (error) {
                 showStatus('Print export failed: ' + error.message, 'error');
             }
+        }
+
+        function switchToMonth(monthStr) {
+            // Set the month selector to the clicked month
+            const monthSelect = document.getElementById('monthSelect');
+            if (monthSelect) {
+                monthSelect.value = monthStr;
+            }
+            
+            // Switch to monthly tab
+            showTab('monthly');
+            
+            // Regenerate timesheet for the selected month
+            generateTimesheet();
+            
+            // Show confirmation message
+            const monthName = new Date(monthStr + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            showStatus('Switched to ' + monthName + ' timesheet', 'success');
         }
 
         window.onload = function() {
