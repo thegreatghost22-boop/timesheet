@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timesheet Archive - Wendy Ballard</title>
+    <title>Nanny Timesheet Management System</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 900px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f7fa;
         }
         .container {
             background: white;
-            padding: 30px;
             border-radius: 12px;
+            padding: 25px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
         }
         .header {
             text-align: center;
@@ -29,150 +30,1247 @@
             margin: 0;
             font-size: 2.2em;
         }
-        .header p {
+        .nav-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .nav-tab {
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
             color: #6c757d;
-            margin: 10px 0 0 0;
+            border-radius: 8px 8px 0 0;
+            margin-right: 5px;
+            transition: all 0.3s ease;
         }
-        .archive-grid {
+        .nav-tab.active {
+            background: #4CAF50;
+            color: white;
+        }
+        .nav-tab:hover {
+            background: #45a049;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .info-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
-            margin: 30px 0;
-        }
-        .archive-card {
+            margin-bottom: 30px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 20px;
             border-radius: 10px;
-            text-decoration: none;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            display: block;
         }
-        .archive-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-            text-decoration: none;
-            color: white;
-        }
-        .archive-card h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.4em;
-        }
-        .archive-card p {
-            margin: 5px 0;
-            opacity: 0.9;
-        }
-        .archive-card .date {
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-        .navigation {
+        .info-box {
             text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
         }
-        .nav-link {
-            display: inline-block;
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+        }
+        .info-box .value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        .timesheet-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .timesheet-table th,
+        .timesheet-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .timesheet-table th {
             background: linear-gradient(135deg, #4CAF50, #45a049);
             color: white;
-            padding: 12px 24px;
-            border-radius: 6px;
-            text-decoration: none;
             font-weight: 600;
-            transition: transform 0.3s ease;
         }
-        .nav-link:hover {
-            transform: translateY(-2px);
-            text-decoration: none;
-            color: white;
+        .date-cell {
+            text-align: left;
+            font-weight: bold;
+            background-color: #f8f9fa;
         }
-        .summary-stats {
-            background: #f8f9fa;
+        .time-input {
+            width: 80px;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-family: inherit;
+        }
+        .hours-cell {
+            background-color: #e8f5e8;
+            font-weight: bold;
+        }
+        .personal-holiday-cell {
+            background-color: #fff3cd;
+        }
+        .family-holiday-cell {
+            background-color: #fce4ec;
+        }
+        .bank-holiday-cell {
+            background-color: #d4edda;
+        }
+        .toil-usage-cell {
+            background-color: #e1f5fe;
+        }
+        .week-total {
+            background-color: #d1ecf1;
+            font-weight: bold;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
             padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             border-left: 4px solid #4CAF50;
         }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+        .card h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.2em;
         }
-        .stat-item {
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 1.5em;
+        .metric {
+            font-size: 2em;
             font-weight: bold;
             color: #4CAF50;
         }
-        .stat-label {
-            font-size: 0.9em;
-            color: #6c757d;
+        .btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+        }
+        .carry-forward-section {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #2196F3;
+        }
+        .toil-tracking-section {
+            background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #e91e63;
+        }
+        .holiday-tracking-section {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #9c27b0;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .data-table th {
+            background: #343a40;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .data-table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+        .export-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .status-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .legend {
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .legend-item {
+            display: inline-block;
+            margin-right: 20px;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        @media print {
+            .nav-tabs, .export-section, .btn { display: none !important; }
+            body { font-size: 12px; }
+        }
+        @media (max-width: 768px) {
+            .info-section { grid-template-columns: 1fr; }
+            .dashboard-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Timesheet Archive</h1>
-            <p>Historical timesheets and monthly summaries</p>
+            <h1>Nanny Timesheet Management System</h1>
+            <p>Wendy Ballard - Professional Time Tracking & Payroll Management with TOIL</p>
         </div>
 
-        <div class="summary-stats">
-            <h3 style="margin-top: 0;">Archive Summary</h3>
-            <p>Complete record of all monthly timesheets with detailed breakdowns.</p>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value">1</div>
-                    <div class="stat-label">Months Archived</div>
+        <div id="statusMessage"></div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('monthly')">Monthly Timesheet</button>
+            <button class="nav-tab" onclick="showTab('dashboard')">Dashboard</button>
+            <button class="nav-tab" onclick="showTab('annual')">Annual Reports</button>
+            <button class="nav-tab" onclick="showTab('data')">Data Management</button>
+        </div>
+
+        <!-- Monthly Timesheet Tab -->
+        <div id="monthly" class="tab-content active">
+            <div class="info-section">
+                <div class="info-box">
+                    <h3>Current Month</h3>
+                    <div class="value">
+                        <input type="month" id="monthSelect" value="2025-09" onchange="generateTimesheet()" style="background: transparent; border: none; color: white; font-size: 0.8em;">
+                    </div>
+                    <div>£23.00/hour | 32h/week contract</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value">£23.00</div>
-                    <div class="stat-label">Hourly Rate</div>
+                <div class="info-box">
+                    <h3>Personal Holiday</h3>
+                    <div class="value"><span id="personalHolidaysRemaining">0</span>/<span id="holidaysTotal">28</span></div>
+                    <div>Days remaining this year</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value">32h/week</div>
-                    <div class="stat-label">Contract Hours</div>
+                <div class="info-box">
+                    <h3>TOIL Balance</h3>
+                    <div class="value"><span id="toilBalance">0</span></div>
+                    <div>Hours available</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value">2025</div>
-                    <div class="stat-label">Current Year</div>
+            </div>
+
+            <div class="toil-tracking-section">
+                <h3 style="margin-top: 0; color: #c2185b;">TOIL (Time Off In Lieu) Management</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong>TOIL from Previous Month:</strong> 
+                        <input type="number" id="toilFromPrevious" value="0" step="0.25" onchange="updateTotals(); saveData();" style="width: 60px; margin-left: 5px;"> hours<br>
+                        <small>Hours carried forward to be offset by overtime</small>
+                    </div>
+                    <div>
+                        <strong>Family Holiday This Month:</strong>
+                        <input type="number" id="familyHolidayDays" value="0" min="0" step="0.5" onchange="updateTotals(); saveData();" style="width: 50px; margin-left: 5px;"> days<br>
+                        <small>Creates new TOIL (doesn't reduce personal entitlement)</small>
+                    </div>
+                    <div>
+                        <strong>TOIL Used This Month:</strong> <span id="toilUsedThisMonth">0.00</span> hours<br>
+                        <small>Time off using TOIL balance</small>
+                    </div>
+                    <div>
+                        <strong>Net TOIL to Carry Forward:</strong> <span id="toilToCarryForward">0.00</span> hours<br>
+                        <small>Remaining after overtime offset</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="holiday-tracking-section">
+                <h3 style="margin-top: 0; color: #7b1fa2;">Personal Holiday & Bank Holiday Tracking</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong>Bank Holidays This Month:</strong> 
+                        <input type="number" id="currentBankHolidays" value="0" min="0" step="0.5" onchange="updateTotals(); saveData();" style="width: 50px; margin-left: 5px;"> days<br>
+                        <strong>Personal Holiday This Month:</strong> <span id="personalHolidaysThisMonth">0.00</span> days
+                    </div>
+                    <div>
+                        <strong>Bank Holidays Used YTD:</strong> <span id="bankHolidaysUsed">0</span> days<br>
+                        <strong>Personal Holiday Used YTD:</strong> <span id="personalHolidaysUsed">0.0</span> days<br>
+                        <strong>Total Used YTD:</strong> <span id="totalHolidaysUsed">0.0</span> days
+                    </div>
+                </div>
+            </div>
+
+            <div class="legend">
+                <span class="legend-item personal-holiday-cell"><strong>Personal Holiday</strong> - Wendy's choice, reduces 28-day entitlement</span>
+                <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> - Family travels, creates TOIL</span>
+                <span class="legend-item bank-holiday-cell"><strong>Bank Holiday</strong> - Statutory holiday</span>
+                <span class="legend-item toil-usage-cell"><strong>TOIL Usage</strong> - Using accumulated TOIL balance</span>
+            </div>
+
+            <table class="timesheet-table" id="timesheetTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Hours</th>
+                        <th>Personal Holiday</th>
+                        <th>Family Holiday</th>
+                        <th>TOIL Usage</th>
+                        <th>Comments</th>
+                    </tr>
+                </thead>
+                <tbody id="timesheetBody">
+                    <!-- Generated content -->
+                </tbody>
+            </table>
+
+            <div class="carry-forward-section">
+                <h3 style="margin-top: 0; color: #1976d2;">Monthly Summary & Overtime Calculations</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong>Hours Worked:</strong> <span id="totalHours">0.00</span><br>
+                        <strong>Contract Hours:</strong> <span id="contractHours">0.00</span><br>
+                        <strong>Overtime Hours:</strong> <span id="overtimeHours">0.00</span>
+                    </div>
+                    <div>
+                        <strong>TOIL Offset Applied:</strong> <span id="toilOffset">0.00</span> hours<br>
+                        <strong>Remaining Overtime:</strong> <span id="remainingOvertime">0.00</span> hours<br>
+                        <strong>Net Personal Holiday:</strong> <span id="netPersonalHolidayHours">0.00</span> hours
+                    </div>
+                    <div>
+                        <button class="btn btn-info" onclick="saveData()" style="margin-bottom: 10px;">Save Data</button><br>
+                        <strong>Total Gross Pay:</strong><br>
+                        <span style="font-size: 1.5em; color: #2c3e50;">£<span id="totalPay">0.00</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>For Nannytax Submission</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div><strong>Hours Worked:</strong> <span id="submissionHours">0.00</span></div>
+                    <div><strong>Regular Pay:</strong> £<span id="submissionPay">0.00</span></div>
+                    <div><strong>Holiday Pay:</strong> £<span id="submissionHolidayPay">0.00</span></div>
+                    <div><strong>Overtime Pay:</strong> £<span id="submissionOvertimePay">0.00</span></div>
+                    <div><strong>Total Gross:</strong> £<span id="submissionTotal">0.00</span></div>
                 </div>
             </div>
         </div>
 
-        <div class="archive-grid">
-            <a href="archive/2025-09.html" class="archive-card">
-                <h3>September 2025</h3>
-                <p><strong>Period:</strong> Sept 1-30, 2025</p>
-                <p><strong>Working Days:</strong> 22 days</p>
-                <p><strong>Status:</strong> Completed & Submitted</p>
-                <div class="date">Archived: September 2025</div>
-            </a>
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>This Year Summary</h3>
+                    <div class="metric" id="ytdHours">0</div>
+                    <p>Total Hours Worked</p>
+                </div>
+                <div class="card">
+                    <h3>Total Earnings</h3>
+                    <div class="metric" id="ytdEarnings">£0</div>
+                    <p>Year to Date</p>
+                </div>
+                <div class="card">
+                    <h3>Personal Holiday Balance</h3>
+                    <div class="metric" id="holidayBalance">28</div>
+                    <p>Days Remaining</p>
+                </div>
+                <div class="card">
+                    <h3>TOIL Balance</h3>
+                    <div class="metric" id="dashboardToilBalance">0</div>
+                    <p>Hours Available</p>
+                </div>
+            </div>
 
-            <!-- Template for future months - copy and modify as needed -->
-            <!-- 
-            <a href="archive/2025-10.html" class="archive-card">
-                <h3>October 2025</h3>
-                <p><strong>Period:</strong> Oct 1-31, 2025</p>
-                <p><strong>Working Days:</strong> 23 days</p>
-                <p><strong>Status:</strong> Completed & Submitted</p>
-                <div class="date">Archived: October 2025</div>
-            </a>
-            -->
+            <div class="card">
+                <h3>Recent Months Overview</h3>
+                <table class="data-table" id="monthlyOverview">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Hours Worked</th>
+                            <th>Personal Holiday</th>
+                            <th>Family Holiday</th>
+                            <th>Bank Holidays</th>
+                            <th>TOIL Balance</th>
+                            <th>Gross Pay</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyOverviewBody">
+                        <!-- Generated content -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="navigation">
-            <a href="index.html" class="nav-link">← Back to Current Month</a>
+        <!-- Annual Reports Tab -->
+        <div id="annual" class="tab-content">
+            <div class="card">
+                <h3>Annual Summary Report</h3>
+                <div style="margin-bottom: 20px;">
+                    <label><strong>Year:</strong></label>
+                    <select id="yearSelect" onchange="generateAnnualReport()">
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                    </select>
+                </div>
+                <div id="annualReportContent">
+                    <!-- Generated content -->
+                </div>
+            </div>
         </div>
 
-        <div style="margin-top: 40px; text-align: center; color: #6c757d; font-size: 0.9em;">
-            <p>All timesheet data is stored securely and backed up automatically.</p>
-            <p>For questions about archived data, refer to the original monthly files.</p>
+        <!-- Data Management Tab -->
+        <div id="data" class="tab-content">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Export Data</h3>
+                    <button class="btn" onclick="exportAllData()">Export All Data (JSON)</button>
+                    <button class="btn btn-info" onclick="exportAnnualCSV()">Export Annual CSV</button>
+                    <button class="btn btn-secondary" onclick="generateCSV()">Export Current Month</button>
+                </div>
+                <div class="card">
+                    <h3>Import Data</h3>
+                    <input type="file" id="importFile" accept=".json" style="margin-bottom: 10px;">
+                    <button class="btn btn-info" onclick="importData()">Import Data</button>
+                </div>
+                <div class="card">
+                    <h3>Backup & Restore</h3>
+                    <button class="btn btn-secondary" onclick="createBackup()">Create Backup</button>
+                    <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Data Overview</h3>
+                <div id="dataOverview">
+                    <!-- Generated content -->
+                </div>
+            </div>
+        </div>
+
+        <div class="export-section">
+            <button class="btn" onclick="generateCSV()">Export Current Month for Nannytax</button>
+            <button class="btn btn-secondary" onclick="printTimesheet()">Print Current Month</button>
         </div>
     </div>
+
+    <script>
+        const HOURLY_RATE = 23.00;
+        const CONTRACT_HOURS_PER_WEEK = 32;
+        const ANNUAL_HOLIDAY_DAYS = 28;
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = '<div class="status-message status-' + type + '">' + message + '</div>';
+            setTimeout(function() {
+                statusDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'dashboard') {
+                updateDashboard();
+            } else if (tabName === 'annual') {
+                generateAnnualReport();
+            } else if (tabName === 'data') {
+                updateDataOverview();
+            }
+        }
+
+        function getCurrentMonth() {
+            return document.getElementById('monthSelect').value;
+        }
+
+        function countWorkingDaysInMonth(year, month) {
+            let count = 0;
+            const date = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            while (date <= lastDay) {
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek >= 1 && dayOfWeek <= 5) count++;
+                date.setDate(date.getDate() + 1);
+            }
+            return count;
+        }
+
+        function calculateHolidayBalance() {
+            const allData = getAllMonthlyData();
+            let totalBankHolidays = 0;
+            let totalPersonalHolidays = 0;
+            
+            Object.keys(allData).forEach(function(month) {
+                const data = allData[month];
+                totalBankHolidays += data.bankHolidays || 0;
+                totalPersonalHolidays += (data.personalHolidayHours || 0) / 8; // Convert hours to days
+            });
+            
+            const remainingHolidays = ANNUAL_HOLIDAY_DAYS - totalBankHolidays - totalPersonalHolidays;
+            
+            return {
+                totalUsed: totalBankHolidays + totalPersonalHolidays,
+                bankHolidaysUsed: totalBankHolidays,
+                personalHolidaysUsed: totalPersonalHolidays,
+                remaining: Math.max(0, remainingHolidays)
+            };
+        }
+
+        function calculateToilBalance() {
+            const allData = getAllMonthlyData();
+            let currentBalance = 0;
+            
+            // Process months in chronological order
+            Object.keys(allData).sort().forEach(function(month) {
+                const data = allData[month];
+                currentBalance += (data.toilBalance || 0);
+            });
+            
+            return Math.max(0, currentBalance);
+        }
+
+        function generateTimesheet() {
+            const monthStr = getCurrentMonth();
+            const parts = monthStr.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            
+            const tbody = document.getElementById('timesheetBody');
+            tbody.innerHTML = '';
+            
+            let weekNumber = 1;
+            
+            for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+                const dayOfWeek = date.getDay();
+                const dateStr = date.toISOString().split('T')[0];
+                const dayName = date.toLocaleDateString('en-GB', { weekday: 'long' });
+                const dayDate = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' });
+                
+                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = '<td class="date-cell">' + dayName + ', ' + dayDate + '</td>' +
+                    '<td><input type="time" class="time-input" id="timeIn_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\'); saveData();"></td>' +
+                    '<td><input type="time" class="time-input" id="timeOut_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\'); saveData();"></td>' +
+                    '<td class="hours-cell"><span id="hours_' + dateStr + '">0.00</span></td>' +
+                    '<td class="personal-holiday-cell"><input type="number" class="time-input" id="personalHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
+                    '<td class="family-holiday-cell"><input type="number" class="time-input" id="familyHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
+                    '<td class="toil-usage-cell"><input type="number" class="time-input" id="toilUsage_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
+                    '<td class="comments-cell"><input type="text" id="comments_' + dateStr + '" placeholder="Notes..." style="width: 100%; border: none; background: transparent;" onchange="saveData();"></td>';
+                tbody.appendChild(row);
+                
+                if (dayOfWeek === 5 || date.getTime() === lastDay.getTime()) {
+                    const totalRow = document.createElement('tr');
+                    totalRow.innerHTML = '<td class="week-total">Week ' + weekNumber + ' Total</td>' +
+                        '<td class="week-total" colspan="2"></td>' +
+                        '<td class="week-total"><span id="weekTotal_' + weekNumber + '">0.00</span></td>' +
+                        '<td class="week-total"><span id="weekPersonalHoliday_' + weekNumber + '">0.00</span></td>' +
+                        '<td class="week-total"><span id="weekFamilyHoliday_' + weekNumber + '">0.00</span></td>' +
+                        '<td class="week-total"><span id="weekToilUsage_' + weekNumber + '">0.00</span></td>' +
+                        '<td class="week-total"></td>';
+                    tbody.appendChild(totalRow);
+                    weekNumber++;
+                }
+            }
+            
+            loadSavedData();
+            updateTotals();
+        }
+
+        function calculateHours(dateStr) {
+            const timeInElement = document.getElementById('timeIn_' + dateStr);
+            const timeOutElement = document.getElementById('timeOut_' + dateStr);
+            
+            if (!timeInElement || !timeOutElement) return;
+            
+            const timeIn = timeInElement.value;
+            const timeOut = timeOutElement.value;
+            
+            if (timeIn && timeOut) {
+                const startTime = new Date('2000-01-01T' + timeIn + ':00');
+                const endTime = new Date('2000-01-01T' + timeOut + ':00');
+                
+                if (endTime < startTime) {
+                    endTime.setDate(endTime.getDate() + 1);
+                }
+                
+                const diffMs = endTime - startTime;
+                const totalHours = diffMs / (1000 * 60 * 60);
+                
+                const hoursElement = document.getElementById('hours_' + dateStr);
+                if (hoursElement) {
+                    hoursElement.textContent = totalHours.toFixed(2);
+                }
+            } else {
+                const hoursElement = document.getElementById('hours_' + dateStr);
+                if (hoursElement) {
+                    hoursElement.textContent = '0.00';
+                }
+            }
+            
+            updateTotals();
+        }
+
+        function updateTotals() {
+            const monthStr = getCurrentMonth();
+            const parts = monthStr.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            
+            let totalWorkedHours = 0;
+            let totalPersonalHolidayHours = 0;
+            let totalFamilyHolidayHours = 0;
+            let totalToilUsageHours = 0;
+            let weekNumber = 1;
+            let weekHours = 0;
+            let weekPersonalHoliday = 0;
+            let weekFamilyHoliday = 0;
+            let weekToilUsage = 0;
+            
+            for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+                
+                const dateStr = date.toISOString().split('T')[0];
+                const hoursElement = document.getElementById('hours_' + dateStr);
+                const personalHolidayElement = document.getElementById('personalHoliday_' + dateStr);
+                const familyHolidayElement = document.getElementById('familyHoliday_' + dateStr);
+                const toilUsageElement = document.getElementById('toilUsage_' + dateStr);
+                
+                if (hoursElement && personalHolidayElement && familyHolidayElement && toilUsageElement) {
+                    const dayHours = parseFloat(hoursElement.textContent) || 0;
+                    const dayPersonalHoliday = parseFloat(personalHolidayElement.value) || 0;
+                    const dayFamilyHoliday = parseFloat(familyHolidayElement.value) || 0;
+                    const dayToilUsage = parseFloat(toilUsageElement.value) || 0;
+                    
+                    totalWorkedHours += dayHours;
+                    totalPersonalHolidayHours += dayPersonalHoliday;
+                    totalFamilyHolidayHours += dayFamilyHoliday;
+                    totalToilUsageHours += dayToilUsage;
+                    weekHours += dayHours;
+                    weekPersonalHoliday += dayPersonalHoliday;
+                    weekFamilyHoliday += dayFamilyHoliday;
+                    weekToilUsage += dayToilUsage;
+                }
+                
+                if (dayOfWeek === 5 || date.getTime() === lastDay.getTime()) {
+                    const weekTotalEl = document.getElementById('weekTotal_' + weekNumber);
+                    const weekPersonalHolidayEl = document.getElementById('weekPersonalHoliday_' + weekNumber);
+                    const weekFamilyHolidayEl = document.getElementById('weekFamilyHoliday_' + weekNumber);
+                    const weekToilUsageEl = document.getElementById('weekToilUsage_' + weekNumber);
+                    
+                    if (weekTotalEl) weekTotalEl.textContent = weekHours.toFixed(2);
+                    if (weekPersonalHolidayEl) weekPersonalHolidayEl.textContent = weekPersonalHoliday.toFixed(2);
+                    if (weekFamilyHolidayEl) weekFamilyHolidayEl.textContent = weekFamilyHoliday.toFixed(2);
+                    if (weekToilUsageEl) weekToilUsageEl.textContent = weekToilUsage.toFixed(2);
+                    
+                    weekNumber++;
+                    weekHours = 0;
+                    weekPersonalHoliday = 0;
+                    weekFamilyHoliday = 0;
+                    weekToilUsage = 0;
+                }
+            }
+            
+            const toilFromPreviousElement = document.getElementById('toilFromPrevious');
+            const familyHolidayDaysElement = document.getElementById('familyHolidayDays');
+            const currentBankHolidaysElement = document.getElementById('currentBankHolidays');
+            
+            const toilFromPrevious = toilFromPreviousElement ? parseFloat(toilFromPreviousElement.value) || 0 : 0;
+            const familyHolidayDays = familyHolidayDaysElement ? parseFloat(familyHolidayDaysElement.value) || 0 : 0;
+            const currentBankHolidays = currentBankHolidaysElement ? parseFloat(currentBankHolidaysElement.value) || 0 : 0;
+            
+            // Add family holiday days to family holiday hours from timesheet
+            const totalFamilyHolidayFromDays = familyHolidayDays * 6.4; // 32 hours / 5 days = 6.4 hours per day
+            const combinedFamilyHolidayHours = totalFamilyHolidayHours + totalFamilyHolidayFromDays;
+            
+            const workingDaysInCurrentMonth = countWorkingDaysInMonth(year, month - 1);
+            const contractHours = (workingDaysInCurrentMonth / 5) * CONTRACT_HOURS_PER_WEEK;
+            const overtimeHours = Math.max(0, totalWorkedHours - contractHours);
+            
+            // TOIL Calculations
+            const currentToilDebt = toilFromPrevious + combinedFamilyHolidayHours;
+            const toilOffsetByOvertime = Math.min(overtimeHours, currentToilDebt);
+            const remainingOvertimeAfterToilOffset = overtimeHours - toilOffsetByOvertime;
+            const remainingToilDebt = Math.max(0, currentToilDebt - toilOffsetByOvertime);
+            const netToilBalance = remainingToilDebt - totalToilUsageHours;
+            
+            // Calculate total pay
+            const totalPay = (totalWorkedHours + totalPersonalHolidayHours + totalToilUsageHours) * HOURLY_RATE;
+            
+            // Calculate holiday balances
+            const holidayBalance = calculateHolidayBalance();
+            const personalHolidaysThisMonth = totalPersonalHolidayHours / 8;
+            
+            // Update display elements
+            const updateElement = function(id, value) {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+            };
+            
+            updateElement('totalHours', totalWorkedHours.toFixed(2));
+            updateElement('contractHours', contractHours.toFixed(2));
+            updateElement('overtimeHours', overtimeHours.toFixed(2));
+            updateElement('toilOffset', toilOffsetByOvertime.toFixed(2));
+            updateElement('remainingOvertime', remainingOvertimeAfterToilOffset.toFixed(2));
+            updateElement('netPersonalHolidayHours', totalPersonalHolidayHours.toFixed(2));
+            updateElement('totalPay', totalPay.toFixed(2));
+            
+            // TOIL tracking updates
+            updateElement('toilUsedThisMonth', totalToilUsageHours.toFixed(2));
+            updateElement('toilToCarryForward', netToilBalance.toFixed(2));
+            updateElement('toilBalance', netToilBalance.toFixed(2));
+            
+            // Holiday tracking updates
+            updateElement('personalHolidaysThisMonth', personalHolidaysThisMonth.toFixed(2));
+            updateElement('bankHolidaysUsed', holidayBalance.bankHolidaysUsed.toFixed(1));
+            updateElement('personalHolidaysUsed', holidayBalance.personalHolidaysUsed.toFixed(1));
+            updateElement('totalHolidaysUsed', holidayBalance.totalUsed.toFixed(1));
+            updateElement('personalHolidaysRemaining', holidayBalance.remaining.toFixed(0));
+            updateElement('holidaysTotal', ANNUAL_HOLIDAY_DAYS.toString());
+            
+            updateElement('submissionHours', totalWorkedHours.toFixed(2));
+            updateElement('submissionPay', (totalWorkedHours * HOURLY_RATE).toFixed(2));
+            updateElement('submissionHolidayPay', ((totalPersonalHolidayHours + totalToilUsageHours) * HOURLY_RATE).toFixed(2));
+            updateElement('submissionOvertimePay', (remainingOvertimeAfterToilOffset * HOURLY_RATE).toFixed(2));
+            updateElement('submissionTotal', totalPay.toFixed(2));
+            
+            saveMonthlyData(monthStr, {
+                workedHours: totalWorkedHours,
+                personalHolidayHours: totalPersonalHolidayHours,
+                familyHolidayHours: combinedFamilyHolidayHours,
+                toilUsageHours: totalToilUsageHours,
+                bankHolidays: currentBankHolidays,
+                toilBalance: netToilBalance,
+                overtimeHours: overtimeHours,
+                grossPay: totalPay
+            });
+        }
+
+        function saveData() {
+            const monthStr = getCurrentMonth();
+            const data = {};
+            
+            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"], input[type="month"]');
+            inputs.forEach(function(input) {
+                if (input.value !== '' && input.id) {
+                    data[input.id] = input.value;
+                }
+                if (input.id === 'toilFromPrevious' || input.id === 'familyHolidayDays' || input.id === 'currentBankHolidays') {
+                    data[input.id] = input.value || '0';
+                }
+            });
+            
+            localStorage.setItem('timesheet_' + monthStr, JSON.stringify(data));
+            showStatus('Data saved successfully! (' + Object.keys(data).length + ' fields)', 'success');
+        }
+
+        function loadSavedData() {
+            const monthStr = getCurrentMonth();
+            const savedData = localStorage.getItem('timesheet_' + monthStr);
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                Object.keys(data).forEach(function(id) {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.value = data[id];
+                        if (id.indexOf('timeIn_') !== -1 || id.indexOf('timeOut_') !== -1) {
+                            const dateStr = id.split('_')[1];
+                            calculateHours(dateStr);
+                        }
+                    }
+                });
+            }
+        }
+
+        function saveMonthlyData(month, summary) {
+            const existingData = JSON.parse(localStorage.getItem('monthly_summaries') || '{}');
+            existingData[month] = summary;
+            localStorage.setItem('monthly_summaries', JSON.stringify(existingData));
+        }
+
+        function getAllMonthlyData() {
+            return JSON.parse(localStorage.getItem('monthly_summaries') || '{}');
+        }
+
+        function updateDashboard() {
+            const allData = getAllMonthlyData();
+            const currentYear = new Date().getFullYear();
+            
+            let ytdHours = 0;
+            let ytdEarnings = 0;
+            let monthCount = 0;
+            
+            Object.keys(allData).forEach(function(month) {
+                const parts = month.split('-');
+                const year = parseInt(parts[0]);
+                if (year === currentYear) {
+                    const data = allData[month];
+                    ytdHours += data.workedHours || 0;
+                    ytdEarnings += data.grossPay || 0;
+                    monthCount++;
+                }
+            });
+            
+            const holidayBalance = calculateHolidayBalance();
+            const toilBalance = calculateToilBalance();
+            
+            document.getElementById('ytdHours').textContent = ytdHours.toFixed(0);
+            document.getElementById('ytdEarnings').textContent = '£' + ytdEarnings.toFixed(0);
+            document.getElementById('holidayBalance').textContent = holidayBalance.remaining.toFixed(0);
+            document.getElementById('dashboardToilBalance').textContent = toilBalance.toFixed(0);
+            
+            const tbody = document.getElementById('monthlyOverviewBody');
+            tbody.innerHTML = '';
+            
+            const sortedMonths = Object.keys(allData).sort().reverse().slice(0, 12);
+            if (sortedMonths.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No data available yet. Start entering timesheet data to see summaries.</td></tr>';
+                return;
+            }
+            
+            sortedMonths.forEach(function(month) {
+                const data = allData[month];
+                const row = document.createElement('tr');
+                const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+                
+                row.innerHTML = '<td>' + monthName + '</td>' +
+                    '<td>' + (data.workedHours || 0).toFixed(2) + '</td>' +
+                    '<td>' + ((data.personalHolidayHours || 0) / 8).toFixed(2) + '</td>' +
+                    '<td>' + ((data.familyHolidayHours || 0) / 8).toFixed(2) + '</td>' +
+                    '<td>' + (data.bankHolidays || 0).toFixed(1) + '</td>' +
+                    '<td>' + (data.toilBalance || 0).toFixed(1) + '</td>' +
+                    '<td>£' + (data.grossPay || 0).toFixed(2) + '</td>';
+                tbody.appendChild(row);
+            });
+        }
+
+        function generateAnnualReport() {
+            const year = document.getElementById('yearSelect').value;
+            const allData = getAllMonthlyData();
+            const reportContent = document.getElementById('annualReportContent');
+            
+            let annualHours = 0;
+            let annualEarnings = 0;
+            let annualPersonalHolidayHours = 0;
+            let annualFamilyHolidayHours = 0;
+            let annualBankHolidays = 0;
+            let annualOvertimeHours = 0;
+            let finalToilBalance = 0;
+            let monthsWorked = 0;
+            
+            const monthlyData = [];
+            
+            for (let month = 1; month <= 12; month++) {
+                const monthKey = year + '-' + String(month).padStart(2, '0');
+                const data = allData[monthKey];
+                
+                if (data) {
+                    annualHours += data.workedHours || 0;
+                    annualEarnings += data.grossPay || 0;
+                    annualPersonalHolidayHours += data.personalHolidayHours || 0;
+                    annualFamilyHolidayHours += data.familyHolidayHours || 0;
+                    annualBankHolidays += data.bankHolidays || 0;
+                    annualOvertimeHours += data.overtimeHours || 0;
+                    finalToilBalance = data.toilBalance || 0; // Latest month's balance
+                    monthsWorked++;
+                    
+                    monthlyData.push({
+                        month: new Date(monthKey + '-01').toLocaleDateString('en-GB', { month: 'long' }),
+                        ...data
+                    });
+                }
+            }
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-bottom: 30px;">';
+            html += '<div class="card"><h4>Total Hours</h4><div class="metric" style="font-size: 1.5em;">' + annualHours.toFixed(0) + '</div></div>';
+            html += '<div class="card"><h4>Total Earnings</h4><div class="metric" style="font-size: 1.5em;">£' + annualEarnings.toFixed(0) + '</div></div>';
+            html += '<div class="card"><h4>Personal Holiday</h4><div class="metric" style="font-size: 1.5em;">' + (annualPersonalHolidayHours / 8).toFixed(1) + '</div><p>Days</p></div>';
+            html += '<div class="card"><h4>Family Holiday</h4><div class="metric" style="font-size: 1.5em;">' + (annualFamilyHolidayHours / 8).toFixed(1) + '</div><p>Days</p></div>';
+            html += '<div class="card"><h4>Bank Holidays</h4><div class="metric" style="font-size: 1.5em;">' + annualBankHolidays.toFixed(1) + '</div><p>Days</p></div>';
+            html += '<div class="card"><h4>TOIL Balance</h4><div class="metric" style="font-size: 1.5em;">' + finalToilBalance.toFixed(1) + '</div><p>Hours</p></div>';
+            html += '</div>';
+            
+            if (monthlyData.length > 0) {
+                html += '<table class="data-table">';
+                html += '<thead><tr><th>Month</th><th>Hours</th><th>Personal Holiday</th><th>Family Holiday</th><th>Bank Holidays</th><th>TOIL Balance</th><th>Gross Pay</th></tr></thead><tbody>';
+                
+                monthlyData.forEach(function(month) {
+                    html += '<tr>';
+                    html += '<td>' + month.month + '</td>';
+                    html += '<td>' + (month.workedHours || 0).toFixed(2) + '</td>';
+                    html += '<td>' + ((month.personalHolidayHours || 0) / 8).toFixed(2) + '</td>';
+                    html += '<td>' + ((month.familyHolidayHours || 0) / 8).toFixed(2) + '</td>';
+                    html += '<td>' + (month.bankHolidays || 0).toFixed(1) + '</td>';
+                    html += '<td>' + (month.toilBalance || 0).toFixed(1) + '</td>';
+                    html += '<td>£' + (month.grossPay || 0).toFixed(2) + '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+            } else {
+                html += '<p>No data available for ' + year + '</p>';
+            }
+            
+            reportContent.innerHTML = html;
+        }
+
+        function updateDataOverview() {
+            const allData = getAllMonthlyData();
+            const overview = document.getElementById('dataOverview');
+            
+            let html = '<h4>Stored Data Overview</h4>';
+            html += '<p>Total months with data: ' + Object.keys(allData).length + '</p>';
+            
+            const holidayBalance = calculateHolidayBalance();
+            const toilBalance = calculateToilBalance();
+            
+            html += '<div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">';
+            html += '<strong>Current Balances:</strong><br>';
+            html += 'Personal Holiday Remaining: ' + holidayBalance.remaining.toFixed(1) + ' days<br>';
+            html += 'TOIL Balance: ' + toilBalance.toFixed(1) + ' hours<br>';
+            html += 'Bank Holidays Used: ' + holidayBalance.bankHolidaysUsed.toFixed(1) + ' days<br>';
+            html += 'Personal Holiday Used: ' + holidayBalance.personalHolidaysUsed.toFixed(1) + ' days';
+            html += '</div>';
+            
+            if (Object.keys(allData).length > 0) {
+                html += '<table class="data-table">';
+                html += '<thead><tr><th>Month</th><th>Hours</th><th>Personal Holiday</th><th>Family Holiday</th><th>TOIL Balance</th><th>Earnings</th></tr></thead><tbody>';
+                
+                Object.keys(allData).sort().reverse().forEach(function(month) {
+                    const data = allData[month];
+                    const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+                    
+                    html += '<tr>';
+                    html += '<td>' + monthName + '</td>';
+                    html += '<td>' + (data.workedHours || 0).toFixed(2) + '</td>';
+                    html += '<td>' + ((data.personalHolidayHours || 0) / 8).toFixed(2) + '</td>';
+                    html += '<td>' + ((data.familyHolidayHours || 0) / 8).toFixed(2) + '</td>';
+                    html += '<td>' + (data.toilBalance || 0).toFixed(1) + '</td>';
+                    html += '<td>£' + (data.grossPay || 0).toFixed(2) + '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+            } else {
+                html += '<p>No monthly summaries available. Enter timesheet data to see summaries.</p>';
+            }
+            
+            overview.innerHTML = html;
+        }
+
+        function exportAllData() {
+            const allTimesheet = {};
+            const allSummaries = getAllMonthlyData();
+            
+            for (let key in localStorage) {
+                if (key.startsWith('timesheet_')) {
+                    allTimesheet[key] = JSON.parse(localStorage.getItem(key));
+                }
+            }
+            
+            const exportData = {
+                timesheets: allTimesheet,
+                summaries: allSummaries,
+                exportDate: new Date().toISOString(),
+                version: '5.0-TOIL'
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Wendy_Ballard_Complete_Data_TOIL_' + new Date().toISOString().split('T')[0] + '.json';
+            link.click();
+            URL.revokeObjectURL(link.href);
+            
+            showStatus('All data exported successfully!', 'success');
+        }
+
+        function exportAnnualCSV() {
+            const year = prompt('Enter year to export (e.g., 2025):');
+            if (!year) return;
+            
+            const allData = getAllMonthlyData();
+            let csv = 'Month,Hours Worked,Personal Holiday Hours,Personal Holiday Days,Family Holiday Hours,Family Holiday Days,Bank Holiday Days,TOIL Balance,Overtime Hours,Gross Pay\n';
+            
+            for (let month = 1; month <= 12; month++) {
+                const monthKey = year + '-' + String(month).padStart(2, '0');
+                const data = allData[monthKey];
+                
+                if (data) {
+                    const monthName = new Date(monthKey + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+                    csv += monthName + ',' + 
+                           (data.workedHours || 0).toFixed(2) + ',' + 
+                           (data.personalHolidayHours || 0).toFixed(2) + ',' + 
+                           ((data.personalHolidayHours || 0) / 8).toFixed(2) + ',' + 
+                           (data.familyHolidayHours || 0).toFixed(2) + ',' + 
+                           ((data.familyHolidayHours || 0) / 8).toFixed(2) + ',' + 
+                           (data.bankHolidays || 0).toFixed(1) + ',' + 
+                           (data.toilBalance || 0).toFixed(2) + ',' + 
+                           (data.overtimeHours || 0).toFixed(2) + ',' + 
+                           (data.grossPay || 0).toFixed(2) + '\n';
+                }
+            }
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Wendy_Ballard_Annual_TOIL_' + year + '.csv';
+            link.click();
+            URL.revokeObjectURL(link);
+            
+            showStatus('Annual CSV with TOIL exported successfully!', 'success');
+        }
+
+        function generateCSV() {
+            const monthStr = getCurrentMonth();
+            const parts = monthStr.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const monthName = new Date(year, month - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            
+            let csv = 'Date,Day,Time In,Time Out,Hours Worked,Personal Holiday,Family Holiday,TOIL Usage,Comments\n';
+            
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            
+            for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+                
+                const dateStr = date.toISOString().split('T')[0];
+                const dayName = date.toLocaleDateString('en-GB', { weekday: 'long' });
+                const dateFormat = date.toLocaleDateString('en-GB');
+                
+                const timeInElement = document.getElementById('timeIn_' + dateStr);
+                const timeOutElement = document.getElementById('timeOut_' + dateStr);
+                const hoursElement = document.getElementById('hours_' + dateStr);
+                const personalHolidayElement = document.getElementById('personalHoliday_' + dateStr);
+                const familyHolidayElement = document.getElementById('familyHoliday_' + dateStr);
+                const toilUsageElement = document.getElementById('toilUsage_' + dateStr);
+                const commentsElement = document.getElementById('comments_' + dateStr);
+                
+                const timeIn = timeInElement ? timeInElement.value : '';
+                const timeOut = timeOutElement ? timeOutElement.value : '';
+                const hours = hoursElement ? hoursElement.textContent : '0.00';
+                const personalHoliday = personalHolidayElement ? personalHolidayElement.value : '';
+                const familyHoliday = familyHolidayElement ? familyHolidayElement.value : '';
+                const toilUsage = toilUsageElement ? toilUsageElement.value : '';
+                const comments = commentsElement ? commentsElement.value.replace(/"/g, '""') : '';
+                
+                csv += dateFormat + ',' + dayName + ',' + timeIn + ',' + timeOut + ',' + hours + ',' + personalHoliday + ',' + familyHoliday + ',' + toilUsage + ',"' + comments + '"\n';
+            }
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = 'Wendy_Ballard_Timesheet_TOIL_' + monthName.replace(' ', '_') + '.csv';
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showStatus('Monthly CSV with TOIL exported successfully!', 'success');
+        }
+
+        function importData() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showStatus('Please select a file to import', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (data.timesheets) {
+                        Object.keys(data.timesheets).forEach(function(key) {
+                            localStorage.setItem(key, JSON.stringify(data.timesheets[key]));
+                        });
+                    }
+                    
+                    if (data.summaries) {
+                        localStorage.setItem('monthly_summaries', JSON.stringify(data.summaries));
+                    }
+                    
+                    showStatus('Data imported successfully!', 'success');
+                    generateTimesheet();
+                    updateDashboard();
+                } catch (error) {
+                    showStatus('Error importing data: ' + error.message, 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function createBackup() {
+            exportAllData();
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
+                if (confirm('This will delete all timesheets and summaries. Are you absolutely sure?')) {
+                    for (let key in localStorage) {
+                        if (key.startsWith('timesheet_') || key === 'monthly_summaries') {
+                            localStorage.removeItem(key);
+                        }
+                    }
+                    showStatus('All data cleared!', 'success');
+                    generateTimesheet();
+                    updateDashboard();
+                }
+            }
+        }
+
+        function printTimesheet() {
+            const monthStr = getCurrentMonth();
+            const parts = monthStr.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const monthName = new Date(year, month - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            
+            let printHtml = '<!DOCTYPE html><html><head><title>Timesheet with TOIL - ' + monthName + '</title>';
+            printHtml += '<style>body{font-family:Arial,sans-serif;margin:20px;font-size:11px;}h1{color:#2c3e50;text-align:center;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border:1px solid #000;padding:5px;text-align:center;font-size:10px;}th{background-color:#c9daf8;font-weight:bold;}.date-cell{text-align:left;background-color:#f8f9fa;font-weight:bold;}.week-total{background-color:#d1ecf1;font-weight:bold;}.summary{margin-top:30px;border-top:2px solid #4CAF50;padding-top:20px;}</style>';
+            printHtml += '</head><body><h1>Wendy Ballard - Timesheet with TOIL for ' + monthName + '</h1><table><tr><th>Date</th><th>Time In</th><th>Time Out</th><th>Hours</th><th>Personal Holiday</th><th>Family Holiday</th><th>TOIL Usage</th><th>Comments</th></tr>';
+            
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            let weekHours = 0;
+            let weekPersonalHoliday = 0;
+            let weekFamilyHoliday = 0;
+            let weekToilUsage = 0;
+            let weekNumber = 1;
+            
+            for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+                
+                const dateStr = date.toISOString().split('T')[0];
+                const dayName = date.toLocaleDateString('en-GB', { weekday: 'long' });
+                const dayDate = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' });
+                
+                const timeInEl = document.getElementById('timeIn_' + dateStr);
+                const timeOutEl = document.getElementById('timeOut_' + dateStr);
+                const hoursEl = document.getElementById('hours_' + dateStr);
+                const personalHolidayEl = document.getElementById('personalHoliday_' + dateStr);
+                const familyHolidayEl = document.getElementById('familyHoliday_' + dateStr);
+                const toilUsageEl = document.getElementById('toilUsage_' + dateStr);
+                const commentsEl = document.getElementById('comments_' + dateStr);
+                
+                const timeIn = timeInEl ? timeInEl.value : '';
+                const timeOut = timeOutEl ? timeOutEl.value : '';
+                const hours = hoursEl ? hoursEl.textContent : '0.00';
+                const personalHoliday = personalHolidayEl ? personalHolidayEl.value : '';
+                const familyHoliday = familyHolidayEl ? familyHolidayEl.value : '';
+                const toilUsage = toilUsageEl ? toilUsageEl.value : '';
+                const comments = commentsEl ? commentsEl.value : '';
+                
+                weekHours += parseFloat(hours) || 0;
+                weekPersonalHoliday += parseFloat(personalHoliday) || 0;
+                weekFamilyHoliday += parseFloat(familyHoliday) || 0;
+                weekToilUsage += parseFloat(toilUsage) || 0;
+                
+                printHtml += '<tr><td class="date-cell">' + dayName + ', ' + dayDate + '</td><td>' + timeIn + '</td><td>' + timeOut + '</td><td>' + hours + '</td><td>' + personalHoliday + '</td><td>' + familyHoliday + '</td><td>' + toilUsage + '</td><td>' + comments + '</td></tr>';
+                
+                if (dayOfWeek === 5 || date.getTime() === lastDay.getTime()) {
+                    printHtml += '<tr class="week-total"><td>Week ' + weekNumber + ' Total</td><td colspan="2"></td><td>' + weekHours.toFixed(2) + '</td><td>' + weekPersonalHoliday.toFixed(2) + '</td><td>' + weekFamilyHoliday.toFixed(2) + '</td><td>' + weekToilUsage.toFixed(2) + '</td><td></td></tr>';
+                    weekHours = 0;
+                    weekPersonalHoliday = 0;
+                    weekFamilyHoliday = 0;
+                    weekToilUsage = 0;
+                    weekNumber++;
+                }
+            }
+            
+            const totalHours = document.getElementById('totalHours').textContent;
+            const toilBalance = document.getElementById('toilBalance').textContent;
+            const totalPay = document.getElementById('totalPay').textContent;
+            const toilFromPrevious = document.getElementById('toilFromPrevious').value || '0';
+            const familyHolidayDays = document.getElementById('familyHolidayDays').value || '0';
+            const bankHolidays = document.getElementById('currentBankHolidays').value || '0';
+            
+            printHtml += '</table><div class="summary"><h3>Monthly Summary with TOIL</h3><p><strong>Total Hours Worked:</strong> ' + totalHours + '</p><p><strong>TOIL from Previous Month:</strong> ' + toilFromPrevious + ' hours</p><p><strong>Family Holiday Days This Month:</strong> ' + familyHolidayDays + ' days</p><p><strong>Bank Holidays This Month:</strong> ' + bankHolidays + ' days</p><p><strong>Net TOIL Balance:</strong> ' + toilBalance + ' hours</p><p><strong>Total Gross Pay:</strong> £' + totalPay + '</p><p><strong>Rate:</strong> £23.00/hour</p></div></body></html>';
+            
+            try {
+                const blob = new Blob([printHtml], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'Wendy_Ballard_Timesheet_TOIL_' + monthName.replace(' ', '_') + '_Printable.html';
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                showStatus('Printable timesheet with TOIL downloaded! Open the HTML file and use Ctrl+P to print.', 'success');
+            } catch (error) {
+                showStatus('Print export failed: ' + error.message, 'error');
+            }
+        }
+
+        window.onload = function() {
+            generateTimesheet();
+        };
+    </script>
 </body>
 </html>
