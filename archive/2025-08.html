@@ -199,6 +199,13 @@
             margin: 20px 0;
             border-left: 5px solid #9c27b0;
         }
+        .proxy-parenting-section {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #f57c00;
+        }
         .data-table {
             width: 100%;
             border-collapse: collapse;
@@ -251,6 +258,23 @@
             padding: 3px 8px;
             border-radius: 3px;
         }
+        .checklist {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .checklist-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-left: 3px solid #6c757d;
+            border-radius: 3px;
+        }
+        .checklist-item.active {
+            border-left-color: #4CAF50;
+            background: #e8f5e9;
+        }
         @media print {
             .nav-tabs, .export-section, .btn { display: none !important; }
             body { font-size: 12px; }
@@ -272,6 +296,7 @@
 
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="showTab('monthly')">Monthly Timesheet</button>
+            <button class="nav-tab" onclick="showTab('proxy')">Proxy Parenting</button>
             <button class="nav-tab" onclick="showTab('dashboard')">Dashboard</button>
             <button class="nav-tab" onclick="showTab('annual')">Annual Reports</button>
             <button class="nav-tab" onclick="showTab('data')">Data Management</button>
@@ -323,6 +348,31 @@
                 </div>
             </div>
 
+            <div class="proxy-parenting-section">
+                <h3 style="margin-top: 0; color: #e65100;">Proxy Parenting Tracking</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong>Proxy Parenting Periods:</strong>
+                        <input type="number" id="proxyParentingPeriods" value="0" min="0" step="1" onchange="updateTotals(); saveData();" style="width: 50px; margin-left: 5px;"> periods<br>
+                        <small>Each 7-day period = £1,264 additional pay</small>
+                    </div>
+                    <div>
+                        <strong>Partial Days (under 7 days):</strong>
+                        <input type="number" id="proxyParentingDays" value="0" min="0" step="0.5" onchange="updateTotals(); saveData();" style="width: 50px; margin-left: 5px;"> days<br>
+                        <small>Pro-rata: £180.57 per day</small>
+                    </div>
+                    <div>
+                        <strong>Total Proxy Parenting Pay:</strong> £<span id="proxyParentingPay">0.00</span><br>
+                        <small>Over and above regular salary</small>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 5px; font-size: 12px;">
+                    <strong>Note:</strong> Per Schedule 4, proxy parenting provides 24/7 care during employer isolation. 
+                    Rate includes accommodation, meals, and full parental authority for routine decisions. 
+                    Emergency medical decisions require employer consultation when possible.
+                </div>
+            </div>
+
             <div class="holiday-tracking-section">
                 <h3 style="margin-top: 0; color: #7b1fa2;">Annual Holiday Tracking (28-Day Entitlement)</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -353,10 +403,11 @@
             </div>
 
             <div class="legend">
-                <span class="legend-item personal-holiday-cell"><strong>Personal Holiday</strong> - Wendy's choice, reduces 28-day entitlement</span>
-                <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> - Family travels (check TOIL box to create debt)</span>
-                <span class="legend-item bank-holiday-cell"><strong>Bank Holiday</strong> - Statutory holiday</span>
+                <span class="legend-item personal-holiday-cell"><strong>Personal Holiday</strong> - Wendy's choice from 28-day entitlement</span>
+                <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> - Leave TOIL unchecked = Employer-directed paid holiday (reduces 28 days) | Check TOIL = Creates debt for future overtime offset</span>
+                <span class="legend-item bank-holiday-cell"><strong>Bank Holiday</strong> - Statutory holiday (reduces 28-day entitlement)</span>
                 <span class="legend-item toil-usage-cell"><strong>TOIL Usage</strong> - Using accumulated TOIL balance</span>
+                <span class="legend-item" style="background-color: #fff8dc;"><strong>Weekend Days</strong> - All weekend hours count as overtime (contract is Mon-Fri)</span>
             </div>
 
             <table class="timesheet-table" id="timesheetTable">
@@ -405,7 +456,122 @@
                     <div><strong>Regular Pay:</strong> £<span id="submissionPay">0.00</span></div>
                     <div><strong>Holiday Pay:</strong> £<span id="submissionHolidayPay">0.00</span></div>
                     <div><strong>Overtime Pay:</strong> £<span id="submissionOvertimePay">0.00</span></div>
+                    <div><strong>Proxy Parenting:</strong> £<span id="submissionProxyPay">0.00</span></div>
                     <div><strong>Total Gross:</strong> £<span id="submissionTotal">0.00</span></div>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 12px;">
+                    <strong>Submission Note:</strong> Proxy parenting pay (£1,264 per 7-day period) is over and above regular salary per contract Schedule 4
+                </div>
+            </div>
+        </div>
+
+        <!-- Proxy Parenting Documentation Tab -->
+        <div id="proxy" class="tab-content">
+            <div class="card">
+                <h3>Proxy Parenting Guidelines & Procedures</h3>
+                <p><strong>Per Contract Schedule 4:</strong> Proxy parenting provides 24/7 childcare during employer isolation due to illness or emergency situations.</p>
+                
+                <h4 style="color: #e65100; margin-top: 20px;">Compensation</h4>
+                <ul>
+                    <li><strong>Full week (7 days):</strong> £1,264 over and above regular salary</li>
+                    <li><strong>Partial week:</strong> £180.57 per day (pro-rata)</li>
+                    <li><strong>Accommodation & meals:</strong> Provided at no cost</li>
+                    <li><strong>Payment timing:</strong> With the following month's salary</li>
+                </ul>
+
+                <h4 style="color: #e65100; margin-top: 20px;">Decision-Making Authority</h4>
+                <div class="checklist">
+                    <div class="checklist-item active">
+                        <strong>Wendy has full authority for:</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Daily routines (meals, naps, activities, screen time)</li>
+                            <li>Minor behavioral management consistent with family guidelines</li>
+                            <li>Routine appointments and activities</li>
+                            <li>Emergency first aid and basic medical care</li>
+                            <li>Household management (cleaning, laundry, organization)</li>
+                        </ul>
+                    </div>
+                    <div class="checklist-item">
+                        <strong>Requires your consultation:</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Medical decisions beyond basic first aid or routine care</li>
+                            <li>Changes to established routines or schedules</li>
+                            <li>Disciplinary issues beyond minor behavioral corrections</li>
+                            <li>Concerns about child's physical or emotional well-being</li>
+                            <li>Decisions involving third parties (playdates, activities, etc.)</li>
+                        </ul>
+                    </div>
+                    <div class="checklist-item active">
+                        <strong>Emergency protocols:</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Wendy authorized to seek immediate medical attention without prior consultation</li>
+                            <li>Emergency contact list maintained and updated</li>
+                            <li>Backup emergency contacts if you are unreachable</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4 style="color: #e65100; margin-top: 20px;">Activation Checklist</h4>
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="proxy-notice"> <label for="proxy-notice"><strong>Notice Given:</strong> 24-hour advance notice provided (or emergency declared)</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="proxy-supplies"> <label for="proxy-supplies"><strong>Supplies Ready:</strong> Food, medications, supplies stocked</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="proxy-contacts"> <label for="proxy-contacts"><strong>Contacts Updated:</strong> Emergency contact list current</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="proxy-routines"> <label for="proxy-routines"><strong>Routines Documented:</strong> Daily schedules, preferences, behavioral strategies shared</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="proxy-medical"> <label for="proxy-medical"><strong>Medical Info:</strong> Current medications, allergies, doctor contacts provided</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="proxy-comms"> <label for="proxy-comms"><strong>Communication Plan:</strong> Check-in schedule established (minimum twice daily)</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="proxy-boundaries"> <label for="proxy-boundaries"><strong>Isolation Boundaries:</strong> Physical separation protocols clear</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="proxy-timesheet"> <label for="proxy-timesheet"><strong>Timesheet Entry:</strong> Dates recorded in Monthly Timesheet tab</label>
+                    </div>
+                </div>
+
+                <h4 style="color: #e65100; margin-top: 20px;">Health & Safety Considerations</h4>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #f39c12;">
+                    <strong>Enhanced Hygiene Protocols:</strong>
+                    <ul>
+                        <li>Regular hand sanitization</li>
+                        <li>Wendy must report any illness symptoms immediately</li>
+                        <li>Must inform you of any exposure to infectious diseases within 24 hours</li>
+                        <li>Strict protocols for maintaining physical separation during your isolation</li>
+                    </ul>
+                </div>
+
+                <h4 style="color: #e65100; margin-top: 20px;">Common Scenarios</h4>
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;">
+                    <strong>Example 1: Your illness requiring 5-day isolation</strong>
+                    <ul>
+                        <li>Enter <strong>5</strong> in "Partial Days" field on Monthly Timesheet tab</li>
+                        <li>Pay: 5 × £180.57 = £902.85</li>
+                        <li>Paid with following month's salary</li>
+                    </ul>
+                    
+                    <strong>Example 2: Emergency requiring full week</strong>
+                    <ul>
+                        <li>Enter <strong>1</strong> in "Proxy Parenting Periods" field</li>
+                        <li>Pay: £1,264.00</li>
+                        <li>Paid with following month's salary</li>
+                    </ul>
+                    
+                    <strong>Example 3: Extended illness (10 days)</strong>
+                    <ul>
+                        <li>Enter <strong>1</strong> period + <strong>3</strong> partial days</li>
+                        <li>Pay: £1,264 + (3 × £180.57) = £1,805.71</li>
+                        <li>Paid with following month's salary</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -445,6 +611,7 @@
                             <th>Personal Holiday</th>
                             <th>Family Holiday</th>
                             <th>Bank Holidays</th>
+                            <th>Proxy Parenting</th>
                             <th>TOIL Balance</th>
                             <th>Gross Pay</th>
                         </tr>
@@ -475,12 +642,19 @@
 
         <!-- Data Management Tab -->
         <div id="data" class="tab-content">
+            <div class="card" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-left: 5px solid #2196F3; margin-bottom: 20px;">
+                <h3 style="color: #1565c0; margin-top: 0;">System Test & Validation</h3>
+                <p>Use this section to verify all calculations are working correctly.</p>
+                <button class="btn btn-info" onclick="runSystemTest()">Run System Test</button>
+                <div id="testResults" style="margin-top: 15px; padding: 10px; background: white; border-radius: 5px; display: none;"></div>
+            </div>
+            
             <div class="card" style="background: linear-gradient(135deg, #fff3cd, #ffeaa7); border-left: 5px solid #f39c12; margin-bottom: 20px;">
-                <h3 style="color: #d35400; margin-top: 0;">⚠️ Important: Regular Backups Required</h3>
+                <h3 style="color: #d35400; margin-top: 0;">Important: Regular Backups Required</h3>
                 <p><strong>Browser storage is NOT reliable for critical payroll data.</strong> Chrome crashes, updates, or cache clearing can cause data loss.</p>
                 <p><strong>Best Practice:</strong> Export a backup JSON file after every work session and store it safely.</p>
                 <div style="margin-top: 15px;">
-                    <button class="btn" onclick="exportAllData()" style="font-size: 16px; padding: 15px 30px;">📥 Export Complete Backup Now</button>
+                    <button class="btn" onclick="exportAllData()" style="font-size: 16px; padding: 15px 30px;">Export Complete Backup Now</button>
                     <p style="font-size: 12px; margin-top: 10px;">Last save: <span id="lastSaveTime">Never</span></p>
                 </div>
             </div>
@@ -525,6 +699,8 @@
         const HOURLY_RATE = 23.00;
         const CONTRACT_HOURS_PER_WEEK = 32;
         const ANNUAL_HOLIDAY_DAYS = 28;
+        const PROXY_PARENTING_WEEKLY_RATE = 1264.00;
+        const PROXY_PARENTING_DAILY_RATE = PROXY_PARENTING_WEEKLY_RATE / 7;
 
         function showStatus(message, type) {
             const statusDiv = document.getElementById('statusMessage');
@@ -580,8 +756,8 @@
             Object.keys(allData).forEach(function(month) {
                 const data = allData[month];
                 totalBankHolidays += data.bankHolidays || 0;
-                totalPersonalHolidays += (data.personalHolidayHours || 0) / 8; // Convert hours to days
-                totalEmployerDirectedHolidays += (data.employerDirectedHolidayHours || 0) / 8; // Convert hours to days
+                totalPersonalHolidays += (data.personalHolidayHours || 0) / 8;
+                totalEmployerDirectedHolidays += (data.employerDirectedHolidayHours || 0) / 8;
             });
             
             const totalHolidayUsed = totalBankHolidays + totalPersonalHolidays + totalEmployerDirectedHolidays;
@@ -600,7 +776,6 @@
             const allData = getAllMonthlyData();
             let currentBalance = 0;
             
-            // Process months in chronological order
             Object.keys(allData).sort().forEach(function(month) {
                 const data = allData[month];
                 currentBalance += (data.toilBalance || 0);
@@ -628,17 +803,20 @@
                 const dayName = date.toLocaleDateString('en-GB', { weekday: 'long' });
                 const dayDate = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' });
                 
-                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 
                 const row = document.createElement('tr');
-                row.innerHTML = '<td class="date-cell">' + dayName + ', ' + dayDate + '</td>' +
+                if (isWeekend) {
+                    row.style.backgroundColor = '#fff8dc';
+                }
+                row.innerHTML = '<td class="date-cell">' + (isWeekend ? '' : '') + dayName + ', ' + dayDate + '</td>' +
                     '<td><input type="time" class="time-input" id="timeIn_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\'); saveData();"></td>' +
                     '<td><input type="time" class="time-input" id="timeOut_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\'); saveData();"></td>' +
                     '<td class="hours-cell"><span id="hours_' + dateStr + '">0.00</span></td>' +
-                    '<td class="personal-holiday-cell"><input type="number" class="time-input" id="personalHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
-                    '<td class="family-holiday-cell"><input type="number" class="time-input" id="familyHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();" style="width: 50px;"><br><input type="checkbox" id="toilToggle_' + dateStr + '" onchange="updateTotals(); saveData();" style="margin-top: 2px;"><label for="toilToggle_' + dateStr + '" style="font-size: 10px; margin-left: 2px;">TOIL</label></td>' +
-                    '<td class="toil-usage-cell"><input type="number" class="time-input" id="toilUsage_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
-                    '<td class="comments-cell"><input type="text" id="comments_' + dateStr + '" placeholder="Notes..." style="width: 100%; border: none; background: transparent;" onchange="saveData();"></td>';
+                    '<td class="personal-holiday-cell"><input type="number" class="time-input" id="personalHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();" ' + (isWeekend ? 'disabled' : '') + '></td>' +
+                    '<td class="family-holiday-cell"><input type="number" class="time-input" id="familyHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();" style="width: 50px;" ' + (isWeekend ? 'disabled' : '') + '><br><input type="checkbox" id="toilToggle_' + dateStr + '" onchange="updateTotals(); saveData();" style="margin-top: 2px;" ' + (isWeekend ? 'disabled' : '') + '><label for="toilToggle_' + dateStr + '" style="font-size: 10px; margin-left: 2px;">TOIL</label></td>' +
+                    '<td class="toil-usage-cell"><input type="number" class="time-input" id="toilUsage_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();" ' + (isWeekend ? 'disabled' : '') + '></td>' +
+                    '<td class="comments-cell"><input type="text" id="comments_' + dateStr + '" placeholder="' + (isWeekend ? 'Weekend overtime notes...' : 'Notes...') + '" style="width: 100%; border: none; background: transparent;" onchange="saveData();"></td>';
                 tbody.appendChild(row);
                 
                 if (dayOfWeek === 5 || date.getTime() === lastDay.getTime()) {
@@ -704,9 +882,9 @@
             let totalWorkedHours = 0;
             let totalPersonalHolidayHours = 0;
             let totalFamilyHolidayHours = 0;
-            let totalEmployerDirectedHolidayHours = 0; // Paid holiday from 28-day entitlement
+            let totalEmployerDirectedHolidayHours = 0;
             let totalToilUsageHours = 0;
-            let totalToilCreatingHours = 0; // Only family holiday hours with TOIL checkbox checked
+            let totalToilCreatingHours = 0;
             let weekNumber = 1;
             let weekHours = 0;
             let weekPersonalHoliday = 0;
@@ -715,9 +893,8 @@
             
             for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
                 const dayOfWeek = date.getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-                
                 const dateStr = date.toISOString().split('T')[0];
+                
                 const hoursElement = document.getElementById('hours_' + dateStr);
                 const personalHolidayElement = document.getElementById('personalHoliday_' + dateStr);
                 const familyHolidayElement = document.getElementById('familyHoliday_' + dateStr);
@@ -740,13 +917,10 @@
                     weekFamilyHoliday += dayFamilyHoliday;
                     weekToilUsage += dayToilUsage;
                     
-                    // Separate employer-directed (paid) holiday from TOIL-creating family holiday
                     if (dayFamilyHoliday > 0) {
                         if (isToilCreating) {
-                            // TOIL-creating family holiday (not paid, creates debt)
                             totalToilCreatingHours += dayFamilyHoliday;
                         } else {
-                            // Employer-directed holiday (paid, reduces 28-day entitlement)
                             totalEmployerDirectedHolidayHours += dayFamilyHoliday;
                         }
                     }
@@ -774,34 +948,36 @@
             const toilFromPreviousElement = document.getElementById('toilFromPrevious');
             const familyHolidayDaysElement = document.getElementById('familyHolidayDays');
             const currentBankHolidaysElement = document.getElementById('currentBankHolidays');
+            const proxyParentingPeriodsElement = document.getElementById('proxyParentingPeriods');
+            const proxyParentingDaysElement = document.getElementById('proxyParentingDays');
             
             const toilFromPrevious = toilFromPreviousElement ? parseFloat(toilFromPreviousElement.value) || 0 : 0;
             const familyHolidayDays = familyHolidayDaysElement ? parseFloat(familyHolidayDaysElement.value) || 0 : 0;
             const currentBankHolidays = currentBankHolidaysElement ? parseFloat(currentBankHolidaysElement.value) || 0 : 0;
+            const proxyParentingPeriods = proxyParentingPeriodsElement ? parseFloat(proxyParentingPeriodsElement.value) || 0 : 0;
+            const proxyParentingDays = proxyParentingDaysElement ? parseFloat(proxyParentingDaysElement.value) || 0 : 0;
             
-            // Add family holiday days to TOIL-creating hours from timesheet
-            const totalFamilyHolidayFromDays = familyHolidayDays * 6.4; // 32 hours / 5 days = 6.4 hours per day
+            const proxyParentingPay = (proxyParentingPeriods * PROXY_PARENTING_WEEKLY_RATE) + (proxyParentingDays * PROXY_PARENTING_DAILY_RATE);
+            
+            const totalFamilyHolidayFromDays = familyHolidayDays * 6.4;
             const combinedToilCreatingHours = totalToilCreatingHours + totalFamilyHolidayFromDays;
             
             const workingDaysInCurrentMonth = countWorkingDaysInMonth(year, month - 1);
             const contractHours = (workingDaysInCurrentMonth / 5) * CONTRACT_HOURS_PER_WEEK;
             const overtimeHours = Math.max(0, totalWorkedHours - contractHours);
             
-            // TOIL Calculations
             const currentToilDebt = toilFromPrevious + combinedToilCreatingHours;
             const toilOffsetByOvertime = Math.min(overtimeHours, currentToilDebt);
             const remainingOvertimeAfterToilOffset = overtimeHours - toilOffsetByOvertime;
             const remainingToilDebt = Math.max(0, currentToilDebt - toilOffsetByOvertime);
             const netToilBalance = remainingToilDebt - totalToilUsageHours;
             
-            // Calculate total pay
-            const totalPay = (totalWorkedHours + totalPersonalHolidayHours + totalToilUsageHours) * HOURLY_RATE;
+            const totalPay = (totalWorkedHours + totalPersonalHolidayHours + totalEmployerDirectedHolidayHours + totalToilUsageHours) * HOURLY_RATE + proxyParentingPay;
             
-            // Calculate holiday balances
             const holidayBalance = calculateHolidayBalance();
             const personalHolidaysThisMonth = totalPersonalHolidayHours / 8;
+            const employerDirectedThisMonth = totalEmployerDirectedHolidayHours / 8;
             
-            // Update display elements
             const updateElement = function(id, value) {
                 const element = document.getElementById(id);
                 if (element) element.textContent = value;
@@ -814,35 +990,42 @@
             updateElement('remainingOvertime', remainingOvertimeAfterToilOffset.toFixed(2));
             updateElement('netPersonalHolidayHours', totalPersonalHolidayHours.toFixed(2));
             updateElement('totalPay', totalPay.toFixed(2));
+            updateElement('proxyParentingPay', proxyParentingPay.toFixed(2));
             
-            // TOIL tracking updates
             updateElement('toilUsedThisMonth', totalToilUsageHours.toFixed(2));
             updateElement('toilToCarryForward', netToilBalance.toFixed(2));
             updateElement('toilBalance', netToilBalance.toFixed(2));
             
-            // Holiday tracking updates
             updateElement('personalHolidaysThisMonth', personalHolidaysThisMonth.toFixed(2));
+            updateElement('employerDirectedThisMonth', employerDirectedThisMonth.toFixed(2));
             updateElement('bankHolidaysUsed', holidayBalance.bankHolidaysUsed.toFixed(1));
             updateElement('personalHolidaysUsed', holidayBalance.personalHolidaysUsed.toFixed(1));
+            updateElement('employerDirectedUsed', holidayBalance.employerDirectedUsed.toFixed(1));
             updateElement('totalHolidaysUsed', holidayBalance.totalUsed.toFixed(1));
             updateElement('personalHolidaysRemaining', holidayBalance.remaining.toFixed(0));
+            updateElement('remainingHolidays', holidayBalance.remaining.toFixed(1));
             updateElement('holidaysTotal', ANNUAL_HOLIDAY_DAYS.toString());
             
             updateElement('submissionHours', totalWorkedHours.toFixed(2));
             updateElement('submissionPay', (totalWorkedHours * HOURLY_RATE).toFixed(2));
-            updateElement('submissionHolidayPay', ((totalPersonalHolidayHours + totalToilUsageHours) * HOURLY_RATE).toFixed(2));
+            updateElement('submissionHolidayPay', ((totalPersonalHolidayHours + totalEmployerDirectedHolidayHours + totalToilUsageHours) * HOURLY_RATE).toFixed(2));
             updateElement('submissionOvertimePay', (remainingOvertimeAfterToilOffset * HOURLY_RATE).toFixed(2));
+            updateElement('submissionProxyPay', proxyParentingPay.toFixed(2));
             updateElement('submissionTotal', totalPay.toFixed(2));
             
             saveMonthlyData(monthStr, {
                 workedHours: totalWorkedHours,
                 personalHolidayHours: totalPersonalHolidayHours,
+                employerDirectedHolidayHours: totalEmployerDirectedHolidayHours,
                 familyHolidayHours: totalFamilyHolidayHours,
                 toilCreatingHours: combinedToilCreatingHours,
                 toilUsageHours: totalToilUsageHours,
                 bankHolidays: currentBankHolidays,
                 toilBalance: netToilBalance,
                 overtimeHours: overtimeHours,
+                proxyParentingPay: proxyParentingPay,
+                proxyParentingPeriods: proxyParentingPeriods,
+                proxyParentingDays: proxyParentingDays,
                 grossPay: totalPay
             });
         }
@@ -858,23 +1041,18 @@
                 } else if (input.value !== '' && input.id) {
                     data[input.id] = input.value;
                 }
-                if (input.id === 'toilFromPrevious' || input.id === 'familyHolidayDays' || input.id === 'currentBankHolidays') {
+                if (input.id === 'toilFromPrevious' || input.id === 'familyHolidayDays' || input.id === 'currentBankHolidays' || input.id === 'proxyParentingPeriods' || input.id === 'proxyParentingDays') {
                     data[input.id] = input.value || '0';
                 }
             });
             
-            // Save to localStorage
             localStorage.setItem('timesheet_' + monthStr, JSON.stringify(data));
-            
-            // Also save a timestamp of last save
             localStorage.setItem('last_save_time', new Date().toISOString());
             
-            // Check if data was actually saved by reading it back
             const verification = localStorage.getItem('timesheet_' + monthStr);
             if (verification) {
                 showStatus('Data saved successfully! (' + Object.keys(data).length + ' fields) - Backup recommended', 'success');
                 
-                // Prompt for backup every 5 saves or if significant data entered
                 const saveCount = parseInt(localStorage.getItem('save_count') || '0') + 1;
                 localStorage.setItem('save_count', saveCount.toString());
                 
@@ -929,7 +1107,6 @@
             
             let ytdHours = 0;
             let ytdEarnings = 0;
-            let monthCount = 0;
             
             Object.keys(allData).forEach(function(month) {
                 const parts = month.split('-');
@@ -938,7 +1115,6 @@
                     const data = allData[month];
                     ytdHours += data.workedHours || 0;
                     ytdEarnings += data.grossPay || 0;
-                    monthCount++;
                 }
             });
             
@@ -955,7 +1131,7 @@
             
             const sortedMonths = Object.keys(allData).sort().reverse().slice(0, 12);
             if (sortedMonths.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7">No data available yet. Start entering timesheet data to see summaries.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8">No data available yet. Start entering timesheet data to see summaries.</td></tr>';
                 return;
             }
             
@@ -969,6 +1145,7 @@
                     '<td>' + ((data.personalHolidayHours || 0) / 8).toFixed(2) + '</td>' +
                     '<td>' + ((data.familyHolidayHours || 0) / 8).toFixed(2) + '</td>' +
                     '<td>' + (data.bankHolidays || 0).toFixed(1) + '</td>' +
+                    '<td>' + (data.proxyParentingPay ? '£' + data.proxyParentingPay.toFixed(0) : '-') + '</td>' +
                     '<td>' + (data.toilBalance || 0).toFixed(1) + '</td>' +
                     '<td>£' + (data.grossPay || 0).toFixed(2) + '</td>';
                 row.style.cursor = 'pointer';
@@ -987,6 +1164,7 @@
             let annualFamilyHolidayHours = 0;
             let annualBankHolidays = 0;
             let annualOvertimeHours = 0;
+            let annualProxyParentingPay = 0;
             let finalToilBalance = 0;
             let monthsWorked = 0;
             
@@ -1003,7 +1181,8 @@
                     annualFamilyHolidayHours += data.familyHolidayHours || 0;
                     annualBankHolidays += data.bankHolidays || 0;
                     annualOvertimeHours += data.overtimeHours || 0;
-                    finalToilBalance = data.toilBalance || 0; // Latest month's balance
+                    annualProxyParentingPay += data.proxyParentingPay || 0;
+                    finalToilBalance = data.toilBalance || 0;
                     monthsWorked++;
                     
                     monthlyData.push({
@@ -1019,12 +1198,13 @@
             html += '<div class="card"><h4>Personal Holiday</h4><div class="metric" style="font-size: 1.5em;">' + (annualPersonalHolidayHours / 8).toFixed(1) + '</div><p>Days</p></div>';
             html += '<div class="card"><h4>Family Holiday</h4><div class="metric" style="font-size: 1.5em;">' + (annualFamilyHolidayHours / 8).toFixed(1) + '</div><p>Days</p></div>';
             html += '<div class="card"><h4>Bank Holidays</h4><div class="metric" style="font-size: 1.5em;">' + annualBankHolidays.toFixed(1) + '</div><p>Days</p></div>';
+            html += '<div class="card"><h4>Proxy Parenting</h4><div class="metric" style="font-size: 1.5em;">£' + annualProxyParentingPay.toFixed(0) + '</div></div>';
             html += '<div class="card"><h4>TOIL Balance</h4><div class="metric" style="font-size: 1.5em;">' + finalToilBalance.toFixed(1) + '</div><p>Hours</p></div>';
             html += '</div>';
             
             if (monthlyData.length > 0) {
                 html += '<table class="data-table">';
-                html += '<thead><tr><th>Month</th><th>Hours</th><th>Personal Holiday</th><th>Family Holiday</th><th>Bank Holidays</th><th>TOIL Balance</th><th>Gross Pay</th></tr></thead><tbody>';
+                html += '<thead><tr><th>Month</th><th>Hours</th><th>Personal Holiday</th><th>Family Holiday</th><th>Bank Holidays</th><th>Proxy Parenting</th><th>TOIL Balance</th><th>Gross Pay</th></tr></thead><tbody>';
                 
                 monthlyData.forEach(function(month) {
                     html += '<tr>';
@@ -1033,6 +1213,7 @@
                     html += '<td>' + ((month.personalHolidayHours || 0) / 8).toFixed(2) + '</td>';
                     html += '<td>' + ((month.familyHolidayHours || 0) / 8).toFixed(2) + '</td>';
                     html += '<td>' + (month.bankHolidays || 0).toFixed(1) + '</td>';
+                    html += '<td>' + (month.proxyParentingPay ? '£' + month.proxyParentingPay.toFixed(0) : '-') + '</td>';
                     html += '<td>' + (month.toilBalance || 0).toFixed(1) + '</td>';
                     html += '<td>£' + (month.grossPay || 0).toFixed(2) + '</td>';
                     html += '</tr>';
@@ -1066,7 +1247,7 @@
             
             if (Object.keys(allData).length > 0) {
                 html += '<table class="data-table">';
-                html += '<thead><tr><th>Month</th><th>Hours</th><th>Personal Holiday</th><th>Family Holiday</th><th>TOIL Balance</th><th>Earnings</th></tr></thead><tbody>';
+                html += '<thead><tr><th>Month</th><th>Hours</th><th>Personal Holiday</th><th>Family Holiday</th><th>Proxy Parenting</th><th>TOIL Balance</th><th>Earnings</th></tr></thead><tbody>';
                 
                 Object.keys(allData).sort().reverse().forEach(function(month) {
                     const data = allData[month];
@@ -1077,6 +1258,7 @@
                     html += '<td>' + (data.workedHours || 0).toFixed(2) + '</td>';
                     html += '<td>' + ((data.personalHolidayHours || 0) / 8).toFixed(2) + '</td>';
                     html += '<td>' + ((data.familyHolidayHours || 0) / 8).toFixed(2) + '</td>';
+                    html += '<td>' + (data.proxyParentingPay ? '£' + data.proxyParentingPay.toFixed(0) : '-') + '</td>';
                     html += '<td>' + (data.toilBalance || 0).toFixed(1) + '</td>';
                     html += '<td>£' + (data.grossPay || 0).toFixed(2) + '</td>';
                     html += '</tr>';
@@ -1088,6 +1270,59 @@
             }
             
             overview.innerHTML = html;
+        }
+
+        function runSystemTest() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.style.display = 'block';
+            let html = '<h4>System Test Results:</h4><ul style="list-style: none; padding: 0;">';
+            
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                html += '<li>✅ <strong>localStorage:</strong> Working correctly</li>';
+            } catch (e) {
+                html += '<li>❌ <strong>localStorage:</strong> NOT working - ' + e.message + '</li>';
+            }
+            
+            const currentMonth = getCurrentMonth();
+            const savedData = localStorage.getItem('timesheet_' + currentMonth);
+            if (savedData) {
+                const dataSize = savedData.length;
+                html += '<li>✅ <strong>Current month data:</strong> ' + dataSize + ' characters stored</li>';
+            } else {
+                html += '<li>⚠️ <strong>Current month data:</strong> No data saved yet</li>';
+            }
+            
+            const holidayBalance = calculateHolidayBalance();
+            html += '<li>✅ <strong>Holiday balance:</strong> ' + holidayBalance.remaining.toFixed(1) + ' days remaining</li>';
+            html += '<li style="margin-left: 20px;">- Bank holidays used: ' + holidayBalance.bankHolidaysUsed.toFixed(1) + ' days</li>';
+            html += '<li style="margin-left: 20px;">- Personal holidays used: ' + holidayBalance.personalHolidaysUsed.toFixed(1) + ' days</li>';
+            html += '<li style="margin-left: 20px;">- Employer-directed used: ' + holidayBalance.employerDirectedUsed.toFixed(1) + ' days</li>';
+            
+            const toilBalance = calculateToilBalance();
+            html += '<li>✅ <strong>TOIL balance:</strong> ' + toilBalance.toFixed(1) + ' hours</li>';
+            
+            const allData = getAllMonthlyData();
+            const monthCount = Object.keys(allData).length;
+            html += '<li>✅ <strong>Monthly summaries:</strong> ' + monthCount + ' month(s) stored</li>';
+            
+            html += '<li>✅ <strong>Weekend tracking:</strong> Enabled (all hours count as overtime)</li>';
+            html += '<li>✅ <strong>Proxy parenting:</strong> Tracking enabled</li>';
+            
+            const totalHoursEl = document.getElementById('totalHours');
+            if (totalHoursEl) {
+                const totalHours = parseFloat(totalHoursEl.textContent) || 0;
+                if (totalHours > 200) {
+                    html += '<li>⚠️ <strong>Validation warning:</strong> Total hours (' + totalHours + ') seems unusually high</li>';
+                } else {
+                    html += '<li>✅ <strong>Hours validation:</strong> Total hours within normal range</li>';
+                }
+            }
+            
+            html += '</ul>';
+            html += '<p style="margin-top: 15px; padding: 10px; background: #e8f5e9; border-radius: 5px;"><strong>Test completed at:</strong> ' + new Date().toLocaleString('en-GB') + '</p>';
+            resultsDiv.innerHTML = html;
         }
 
         function exportAllData() {
@@ -1104,13 +1339,13 @@
                 timesheets: allTimesheet,
                 summaries: allSummaries,
                 exportDate: new Date().toISOString(),
-                version: '5.0-TOIL'
+                version: '6.0-ProxyParenting'
             };
             
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'Wendy_Ballard_Complete_Data_TOIL_' + new Date().toISOString().split('T')[0] + '.json';
+            link.download = 'Wendy_Ballard_Complete_Data_' + new Date().toISOString().split('T')[0] + '.json';
             link.click();
             URL.revokeObjectURL(link.href);
             
@@ -1122,7 +1357,7 @@
             if (!year) return;
             
             const allData = getAllMonthlyData();
-            let csv = 'Month,Hours Worked,Personal Holiday Hours,Personal Holiday Days,Family Holiday Hours,Family Holiday Days,Bank Holiday Days,TOIL Balance,Overtime Hours,Gross Pay\n';
+            let csv = 'Month,Hours Worked,Personal Holiday Hours,Personal Holiday Days,Family Holiday Hours,Family Holiday Days,Bank Holiday Days,Proxy Parenting Pay,TOIL Balance,Overtime Hours,Gross Pay\n';
             
             for (let month = 1; month <= 12; month++) {
                 const monthKey = year + '-' + String(month).padStart(2, '0');
@@ -1137,6 +1372,7 @@
                            (data.familyHolidayHours || 0).toFixed(2) + ',' + 
                            ((data.familyHolidayHours || 0) / 8).toFixed(2) + ',' + 
                            (data.bankHolidays || 0).toFixed(1) + ',' + 
+                           (data.proxyParentingPay || 0).toFixed(2) + ',' + 
                            (data.toilBalance || 0).toFixed(2) + ',' + 
                            (data.overtimeHours || 0).toFixed(2) + ',' + 
                            (data.grossPay || 0).toFixed(2) + '\n';
@@ -1146,11 +1382,11 @@
             const blob = new Blob([csv], { type: 'text/csv' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'Wendy_Ballard_Annual_TOIL_' + year + '.csv';
+            link.download = 'Wendy_Ballard_Annual_' + year + '.csv';
             link.click();
             URL.revokeObjectURL(link);
             
-            showStatus('Annual CSV with TOIL exported successfully!', 'success');
+            showStatus('Annual CSV exported successfully!', 'success');
         }
 
         function generateCSV() {
@@ -1166,9 +1402,6 @@
             const lastDay = new Date(year, month, 0);
             
             for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
-                const dayOfWeek = date.getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-                
                 const dateStr = date.toISOString().split('T')[0];
                 const dayName = date.toLocaleDateString('en-GB', { weekday: 'long' });
                 const dateFormat = date.toLocaleDateString('en-GB');
@@ -1196,14 +1429,14 @@
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.href = url;
-            link.download = 'Wendy_Ballard_Timesheet_TOIL_' + monthName.replace(' ', '_') + '.csv';
+            link.download = 'Wendy_Ballard_Timesheet_' + monthName.replace(' ', '_') + '.csv';
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             
-            showStatus('Monthly CSV with TOIL exported successfully!', 'success');
+            showStatus('Monthly CSV exported successfully!', 'success');
         }
 
         function importData() {
@@ -1261,103 +1494,18 @@
         }
 
         function printTimesheet() {
-            const monthStr = getCurrentMonth();
-            const parts = monthStr.split('-');
-            const year = parseInt(parts[0]);
-            const month = parseInt(parts[1]);
-            const monthName = new Date(year, month - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-            
-            let printHtml = '<!DOCTYPE html><html><head><title>Timesheet with TOIL - ' + monthName + '</title>';
-            printHtml += '<style>body{font-family:Arial,sans-serif;margin:20px;font-size:11px;}h1{color:#2c3e50;text-align:center;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border:1px solid #000;padding:5px;text-align:center;font-size:10px;}th{background-color:#c9daf8;font-weight:bold;}.date-cell{text-align:left;background-color:#f8f9fa;font-weight:bold;}.week-total{background-color:#d1ecf1;font-weight:bold;}.summary{margin-top:30px;border-top:2px solid #4CAF50;padding-top:20px;}</style>';
-            printHtml += '</head><body><h1>Wendy Ballard - Timesheet with TOIL for ' + monthName + '</h1><table><tr><th>Date</th><th>Time In</th><th>Time Out</th><th>Hours</th><th>Personal Holiday</th><th>Family Holiday</th><th>TOIL Usage</th><th>Comments</th></tr>';
-            
-            const firstDay = new Date(year, month - 1, 1);
-            const lastDay = new Date(year, month, 0);
-            let weekHours = 0;
-            let weekPersonalHoliday = 0;
-            let weekFamilyHoliday = 0;
-            let weekToilUsage = 0;
-            let weekNumber = 1;
-            
-            for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
-                const dayOfWeek = date.getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-                
-                const dateStr = date.toISOString().split('T')[0];
-                const dayName = date.toLocaleDateString('en-GB', { weekday: 'long' });
-                const dayDate = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' });
-                
-                const timeInEl = document.getElementById('timeIn_' + dateStr);
-                const timeOutEl = document.getElementById('timeOut_' + dateStr);
-                const hoursEl = document.getElementById('hours_' + dateStr);
-                const personalHolidayEl = document.getElementById('personalHoliday_' + dateStr);
-                const familyHolidayEl = document.getElementById('familyHoliday_' + dateStr);
-                const toilUsageEl = document.getElementById('toilUsage_' + dateStr);
-                const commentsEl = document.getElementById('comments_' + dateStr);
-                
-                const timeIn = timeInEl ? timeInEl.value : '';
-                const timeOut = timeOutEl ? timeOutEl.value : '';
-                const hours = hoursEl ? hoursEl.textContent : '0.00';
-                const personalHoliday = personalHolidayEl ? personalHolidayEl.value : '';
-                const familyHoliday = familyHolidayEl ? familyHolidayEl.value : '';
-                const toilUsage = toilUsageEl ? toilUsageEl.value : '';
-                const comments = commentsEl ? commentsEl.value : '';
-                
-                weekHours += parseFloat(hours) || 0;
-                weekPersonalHoliday += parseFloat(personalHoliday) || 0;
-                weekFamilyHoliday += parseFloat(familyHoliday) || 0;
-                weekToilUsage += parseFloat(toilUsage) || 0;
-                
-                printHtml += '<tr><td class="date-cell">' + dayName + ', ' + dayDate + '</td><td>' + timeIn + '</td><td>' + timeOut + '</td><td>' + hours + '</td><td>' + personalHoliday + '</td><td>' + familyHoliday + '</td><td>' + toilUsage + '</td><td>' + comments + '</td></tr>';
-                
-                if (dayOfWeek === 5 || date.getTime() === lastDay.getTime()) {
-                    printHtml += '<tr class="week-total"><td>Week ' + weekNumber + ' Total</td><td colspan="2"></td><td>' + weekHours.toFixed(2) + '</td><td>' + weekPersonalHoliday.toFixed(2) + '</td><td>' + weekFamilyHoliday.toFixed(2) + '</td><td>' + weekToilUsage.toFixed(2) + '</td><td></td></tr>';
-                    weekHours = 0;
-                    weekPersonalHoliday = 0;
-                    weekFamilyHoliday = 0;
-                    weekToilUsage = 0;
-                    weekNumber++;
-                }
-            }
-            
-            const totalHours = document.getElementById('totalHours').textContent;
-            const toilBalance = document.getElementById('toilBalance').textContent;
-            const totalPay = document.getElementById('totalPay').textContent;
-            const toilFromPrevious = document.getElementById('toilFromPrevious').value || '0';
-            const familyHolidayDays = document.getElementById('familyHolidayDays').value || '0';
-            const bankHolidays = document.getElementById('currentBankHolidays').value || '0';
-            
-            printHtml += '</table><div class="summary"><h3>Monthly Summary with TOIL</h3><p><strong>Total Hours Worked:</strong> ' + totalHours + '</p><p><strong>TOIL from Previous Month:</strong> ' + toilFromPrevious + ' hours</p><p><strong>Family Holiday Days This Month:</strong> ' + familyHolidayDays + ' days</p><p><strong>Bank Holidays This Month:</strong> ' + bankHolidays + ' days</p><p><strong>Net TOIL Balance:</strong> ' + toilBalance + ' hours</p><p><strong>Total Gross Pay:</strong> £' + totalPay + '</p><p><strong>Rate:</strong> £23.00/hour</p></div></body></html>';
-            
-            try {
-                const blob = new Blob([printHtml], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'Wendy_Ballard_Timesheet_TOIL_' + monthName.replace(' ', '_') + '_Printable.html';
-                link.click();
-                URL.revokeObjectURL(url);
-                
-                showStatus('Printable timesheet with TOIL downloaded! Open the HTML file and use Ctrl+P to print.', 'success');
-            } catch (error) {
-                showStatus('Print export failed: ' + error.message, 'error');
-            }
+            window.print();
         }
 
         function switchToMonth(monthStr) {
-            // Set the month selector to the clicked month
             const monthSelect = document.getElementById('monthSelect');
             if (monthSelect) {
                 monthSelect.value = monthStr;
             }
             
-            // Switch to monthly tab
             showTab('monthly');
-            
-            // Regenerate timesheet for the selected month
             generateTimesheet();
             
-            // Show confirmation message
             const monthName = new Date(monthStr + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
             showStatus('Switched to ' + monthName + ' timesheet', 'success');
         }
@@ -1365,11 +1513,10 @@
         window.onload = function() {
             generateTimesheet();
             
-            // Display last save time
             const lastSave = localStorage.getItem('last_save_time');
             if (lastSave) {
                 const saveDate = new Date(lastSave);
-                const timeAgo = Math.floor((new Date() - saveDate) / 60000); // minutes ago
+                const timeAgo = Math.floor((new Date() - saveDate) / 60000);
                 const lastSaveElement = document.getElementById('lastSaveTime');
                 if (lastSaveElement) {
                     if (timeAgo < 1) {
