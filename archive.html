@@ -353,9 +353,9 @@
             </div>
 
             <div class="legend">
-                <span class="legend-item personal-holiday-cell"><strong>Personal Holiday</strong> - Wendy's choice, reduces 28-day entitlement</span>
-                <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> - Family travels (check TOIL box to create debt)</span>
-                <span class="legend-item bank-holiday-cell"><strong>Bank Holiday</strong> - Statutory holiday</span>
+                <span class="legend-item personal-holiday-cell"><strong>Personal Holiday</strong> - Wendy's choice from 28-day entitlement</span>
+                <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> - Leave TOIL unchecked = Employer-directed paid holiday (reduces 28 days) | Check TOIL = Creates debt for future overtime offset</span>
+                <span class="legend-item bank-holiday-cell"><strong>Bank Holiday</strong> - Statutory holiday (reduces 28-day entitlement)</span>
                 <span class="legend-item toil-usage-cell"><strong>TOIL Usage</strong> - Using accumulated TOIL balance</span>
             </div>
 
@@ -830,13 +830,14 @@
             
             updateElement('submissionHours', totalWorkedHours.toFixed(2));
             updateElement('submissionPay', (totalWorkedHours * HOURLY_RATE).toFixed(2));
-            updateElement('submissionHolidayPay', ((totalPersonalHolidayHours + totalToilUsageHours) * HOURLY_RATE).toFixed(2));
+            updateElement('submissionHolidayPay', ((totalPersonalHolidayHours + totalEmployerDirectedHolidayHours + totalToilUsageHours) * HOURLY_RATE).toFixed(2));
             updateElement('submissionOvertimePay', (remainingOvertimeAfterToilOffset * HOURLY_RATE).toFixed(2));
             updateElement('submissionTotal', totalPay.toFixed(2));
             
             saveMonthlyData(monthStr, {
                 workedHours: totalWorkedHours,
                 personalHolidayHours: totalPersonalHolidayHours,
+                employerDirectedHolidayHours: totalEmployerDirectedHolidayHours,
                 familyHolidayHours: totalFamilyHolidayHours,
                 toilCreatingHours: combinedToilCreatingHours,
                 toilUsageHours: totalToilUsageHours,
