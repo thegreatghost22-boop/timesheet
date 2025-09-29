@@ -324,24 +324,37 @@
             </div>
 
             <div class="holiday-tracking-section">
-                <h3 style="margin-top: 0; color: #7b1fa2;">Personal Holiday & Bank Holiday Tracking</h3>
+                <h3 style="margin-top: 0; color: #7b1fa2;">Annual Holiday Tracking (28-Day Entitlement)</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                     <div>
                         <strong>Bank Holidays This Month:</strong> 
                         <input type="number" id="currentBankHolidays" value="0" min="0" step="0.5" onchange="updateTotals(); saveData();" style="width: 50px; margin-left: 5px;"> days<br>
-                        <strong>Personal Holiday This Month:</strong> <span id="personalHolidaysThisMonth">0.00</span> days
+                        <small>Statutory holidays (reduces entitlement)</small>
                     </div>
                     <div>
-                        <strong>Bank Holidays Used YTD:</strong> <span id="bankHolidaysUsed">0</span> days<br>
-                        <strong>Personal Holiday Used YTD:</strong> <span id="personalHolidaysUsed">0.0</span> days<br>
-                        <strong>Total Used YTD:</strong> <span id="totalHolidaysUsed">0.0</span> days
+                        <strong>Personal Holiday This Month:</strong> <span id="personalHolidaysThisMonth">0.00</span> days<br>
+                        <small>Wendy's choice (reduces entitlement)</small>
+                    </div>
+                    <div>
+                        <strong>Employer-Directed This Month:</strong> <span id="employerDirectedThisMonth">0.00</span> days<br>
+                        <small>Your choice, paid (reduces entitlement)</small>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #9c27b0;">
+                    <strong style="font-size: 1.1em;">Year-to-Date Holiday Usage:</strong><br>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px;">
+                        <div>Bank Holidays: <strong><span id="bankHolidaysUsed">0</span> days</strong></div>
+                        <div>Personal Holiday: <strong><span id="personalHolidaysUsed">0.0</span> days</strong></div>
+                        <div>Employer-Directed: <strong><span id="employerDirectedUsed">0.0</span> days</strong></div>
+                        <div style="color: #9c27b0; font-size: 1.1em;">Total Used: <strong><span id="totalHolidaysUsed">0.0</span> days</strong></div>
+                        <div style="color: #4CAF50; font-size: 1.2em;">Remaining: <strong><span id="remainingHolidays">28.0</span> days</strong></div>
                     </div>
                 </div>
             </div>
 
             <div class="legend">
                 <span class="legend-item personal-holiday-cell"><strong>Personal Holiday</strong> - Wendy's choice, reduces 28-day entitlement</span>
-                <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> - Family travels, creates TOIL</span>
+                <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> - Family travels (check TOIL box to create debt)</span>
                 <span class="legend-item bank-holiday-cell"><strong>Bank Holiday</strong> - Statutory holiday</span>
                 <span class="legend-item toil-usage-cell"><strong>TOIL Usage</strong> - Using accumulated TOIL balance</span>
             </div>
@@ -462,22 +475,35 @@
 
         <!-- Data Management Tab -->
         <div id="data" class="tab-content">
+            <div class="card" style="background: linear-gradient(135deg, #fff3cd, #ffeaa7); border-left: 5px solid #f39c12; margin-bottom: 20px;">
+                <h3 style="color: #d35400; margin-top: 0;">⚠️ Important: Regular Backups Required</h3>
+                <p><strong>Browser storage is NOT reliable for critical payroll data.</strong> Chrome crashes, updates, or cache clearing can cause data loss.</p>
+                <p><strong>Best Practice:</strong> Export a backup JSON file after every work session and store it safely.</p>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="exportAllData()" style="font-size: 16px; padding: 15px 30px;">📥 Export Complete Backup Now</button>
+                    <p style="font-size: 12px; margin-top: 10px;">Last save: <span id="lastSaveTime">Never</span></p>
+                </div>
+            </div>
+            
             <div class="dashboard-grid">
                 <div class="card">
                     <h3>Export Data</h3>
                     <button class="btn" onclick="exportAllData()">Export All Data (JSON)</button>
                     <button class="btn btn-info" onclick="exportAnnualCSV()">Export Annual CSV</button>
                     <button class="btn btn-secondary" onclick="generateCSV()">Export Current Month</button>
+                    <p style="font-size: 12px; margin-top: 10px; color: #666;">JSON backup includes all months and settings</p>
                 </div>
                 <div class="card">
                     <h3>Import Data</h3>
                     <input type="file" id="importFile" accept=".json" style="margin-bottom: 10px;">
                     <button class="btn btn-info" onclick="importData()">Import Data</button>
+                    <p style="font-size: 12px; margin-top: 10px; color: #666;">Restore from a previous JSON backup</p>
                 </div>
                 <div class="card">
                     <h3>Backup & Restore</h3>
                     <button class="btn btn-secondary" onclick="createBackup()">Create Backup</button>
                     <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+                    <p style="font-size: 12px; margin-top: 10px; color: #666;">Clear all data removes everything permanently</p>
                 </div>
             </div>
             
@@ -549,19 +575,23 @@
             const allData = getAllMonthlyData();
             let totalBankHolidays = 0;
             let totalPersonalHolidays = 0;
+            let totalEmployerDirectedHolidays = 0;
             
             Object.keys(allData).forEach(function(month) {
                 const data = allData[month];
                 totalBankHolidays += data.bankHolidays || 0;
                 totalPersonalHolidays += (data.personalHolidayHours || 0) / 8; // Convert hours to days
+                totalEmployerDirectedHolidays += (data.employerDirectedHolidayHours || 0) / 8; // Convert hours to days
             });
             
-            const remainingHolidays = ANNUAL_HOLIDAY_DAYS - totalBankHolidays - totalPersonalHolidays;
+            const totalHolidayUsed = totalBankHolidays + totalPersonalHolidays + totalEmployerDirectedHolidays;
+            const remainingHolidays = ANNUAL_HOLIDAY_DAYS - totalHolidayUsed;
             
             return {
-                totalUsed: totalBankHolidays + totalPersonalHolidays,
+                totalUsed: totalHolidayUsed,
                 bankHolidaysUsed: totalBankHolidays,
                 personalHolidaysUsed: totalPersonalHolidays,
+                employerDirectedUsed: totalEmployerDirectedHolidays,
                 remaining: Math.max(0, remainingHolidays)
             };
         }
@@ -606,7 +636,7 @@
                     '<td><input type="time" class="time-input" id="timeOut_' + dateStr + '" onchange="calculateHours(\'' + dateStr + '\'); saveData();"></td>' +
                     '<td class="hours-cell"><span id="hours_' + dateStr + '">0.00</span></td>' +
                     '<td class="personal-holiday-cell"><input type="number" class="time-input" id="personalHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
-                    '<td class="family-holiday-cell"><input type="number" class="time-input" id="familyHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
+                    '<td class="family-holiday-cell"><input type="number" class="time-input" id="familyHoliday_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();" style="width: 50px;"><br><input type="checkbox" id="toilToggle_' + dateStr + '" onchange="updateTotals(); saveData();" style="margin-top: 2px;"><label for="toilToggle_' + dateStr + '" style="font-size: 10px; margin-left: 2px;">TOIL</label></td>' +
                     '<td class="toil-usage-cell"><input type="number" class="time-input" id="toilUsage_' + dateStr + '" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals(); saveData();"></td>' +
                     '<td class="comments-cell"><input type="text" id="comments_' + dateStr + '" placeholder="Notes..." style="width: 100%; border: none; background: transparent;" onchange="saveData();"></td>';
                 tbody.appendChild(row);
@@ -674,7 +704,9 @@
             let totalWorkedHours = 0;
             let totalPersonalHolidayHours = 0;
             let totalFamilyHolidayHours = 0;
+            let totalEmployerDirectedHolidayHours = 0; // Paid holiday from 28-day entitlement
             let totalToilUsageHours = 0;
+            let totalToilCreatingHours = 0; // Only family holiday hours with TOIL checkbox checked
             let weekNumber = 1;
             let weekHours = 0;
             let weekPersonalHoliday = 0;
@@ -690,12 +722,14 @@
                 const personalHolidayElement = document.getElementById('personalHoliday_' + dateStr);
                 const familyHolidayElement = document.getElementById('familyHoliday_' + dateStr);
                 const toilUsageElement = document.getElementById('toilUsage_' + dateStr);
+                const toilToggleElement = document.getElementById('toilToggle_' + dateStr);
                 
                 if (hoursElement && personalHolidayElement && familyHolidayElement && toilUsageElement) {
                     const dayHours = parseFloat(hoursElement.textContent) || 0;
                     const dayPersonalHoliday = parseFloat(personalHolidayElement.value) || 0;
                     const dayFamilyHoliday = parseFloat(familyHolidayElement.value) || 0;
                     const dayToilUsage = parseFloat(toilUsageElement.value) || 0;
+                    const isToilCreating = toilToggleElement ? toilToggleElement.checked : false;
                     
                     totalWorkedHours += dayHours;
                     totalPersonalHolidayHours += dayPersonalHoliday;
@@ -705,6 +739,17 @@
                     weekPersonalHoliday += dayPersonalHoliday;
                     weekFamilyHoliday += dayFamilyHoliday;
                     weekToilUsage += dayToilUsage;
+                    
+                    // Separate employer-directed (paid) holiday from TOIL-creating family holiday
+                    if (dayFamilyHoliday > 0) {
+                        if (isToilCreating) {
+                            // TOIL-creating family holiday (not paid, creates debt)
+                            totalToilCreatingHours += dayFamilyHoliday;
+                        } else {
+                            // Employer-directed holiday (paid, reduces 28-day entitlement)
+                            totalEmployerDirectedHolidayHours += dayFamilyHoliday;
+                        }
+                    }
                 }
                 
                 if (dayOfWeek === 5 || date.getTime() === lastDay.getTime()) {
@@ -734,16 +779,16 @@
             const familyHolidayDays = familyHolidayDaysElement ? parseFloat(familyHolidayDaysElement.value) || 0 : 0;
             const currentBankHolidays = currentBankHolidaysElement ? parseFloat(currentBankHolidaysElement.value) || 0 : 0;
             
-            // Add family holiday days to family holiday hours from timesheet
+            // Add family holiday days to TOIL-creating hours from timesheet
             const totalFamilyHolidayFromDays = familyHolidayDays * 6.4; // 32 hours / 5 days = 6.4 hours per day
-            const combinedFamilyHolidayHours = totalFamilyHolidayHours + totalFamilyHolidayFromDays;
+            const combinedToilCreatingHours = totalToilCreatingHours + totalFamilyHolidayFromDays;
             
             const workingDaysInCurrentMonth = countWorkingDaysInMonth(year, month - 1);
             const contractHours = (workingDaysInCurrentMonth / 5) * CONTRACT_HOURS_PER_WEEK;
             const overtimeHours = Math.max(0, totalWorkedHours - contractHours);
             
             // TOIL Calculations
-            const currentToilDebt = toilFromPrevious + combinedFamilyHolidayHours;
+            const currentToilDebt = toilFromPrevious + combinedToilCreatingHours;
             const toilOffsetByOvertime = Math.min(overtimeHours, currentToilDebt);
             const remainingOvertimeAfterToilOffset = overtimeHours - toilOffsetByOvertime;
             const remainingToilDebt = Math.max(0, currentToilDebt - toilOffsetByOvertime);
@@ -792,7 +837,8 @@
             saveMonthlyData(monthStr, {
                 workedHours: totalWorkedHours,
                 personalHolidayHours: totalPersonalHolidayHours,
-                familyHolidayHours: combinedFamilyHolidayHours,
+                familyHolidayHours: totalFamilyHolidayHours,
+                toilCreatingHours: combinedToilCreatingHours,
                 toilUsageHours: totalToilUsageHours,
                 bankHolidays: currentBankHolidays,
                 toilBalance: netToilBalance,
@@ -805,9 +851,11 @@
             const monthStr = getCurrentMonth();
             const data = {};
             
-            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"], input[type="month"]');
+            const inputs = document.querySelectorAll('input[type="time"], input[type="number"], input[type="text"], input[type="month"], input[type="checkbox"]');
             inputs.forEach(function(input) {
-                if (input.value !== '' && input.id) {
+                if (input.type === 'checkbox') {
+                    data[input.id] = input.checked;
+                } else if (input.value !== '' && input.id) {
                     data[input.id] = input.value;
                 }
                 if (input.id === 'toilFromPrevious' || input.id === 'familyHolidayDays' || input.id === 'currentBankHolidays') {
@@ -815,8 +863,31 @@
                 }
             });
             
+            // Save to localStorage
             localStorage.setItem('timesheet_' + monthStr, JSON.stringify(data));
-            showStatus('Data saved successfully! (' + Object.keys(data).length + ' fields)', 'success');
+            
+            // Also save a timestamp of last save
+            localStorage.setItem('last_save_time', new Date().toISOString());
+            
+            // Check if data was actually saved by reading it back
+            const verification = localStorage.getItem('timesheet_' + monthStr);
+            if (verification) {
+                showStatus('Data saved successfully! (' + Object.keys(data).length + ' fields) - Backup recommended', 'success');
+                
+                // Prompt for backup every 5 saves or if significant data entered
+                const saveCount = parseInt(localStorage.getItem('save_count') || '0') + 1;
+                localStorage.setItem('save_count', saveCount.toString());
+                
+                if (saveCount % 5 === 0) {
+                    setTimeout(function() {
+                        if (confirm('You have made ' + saveCount + ' saves. Would you like to download a backup now?')) {
+                            exportAllData();
+                        }
+                    }, 1000);
+                }
+            } else {
+                showStatus('WARNING: Data may not have saved properly! Export backup immediately.', 'error');
+            }
         }
 
         function loadSavedData() {
@@ -828,7 +899,11 @@
                 Object.keys(data).forEach(function(id) {
                     const element = document.getElementById(id);
                     if (element) {
-                        element.value = data[id];
+                        if (element.type === 'checkbox') {
+                            element.checked = data[id] === true;
+                        } else {
+                            element.value = data[id];
+                        }
                         if (id.indexOf('timeIn_') !== -1 || id.indexOf('timeOut_') !== -1) {
                             const dateStr = id.split('_')[1];
                             calculateHours(dateStr);
@@ -1289,6 +1364,25 @@
 
         window.onload = function() {
             generateTimesheet();
+            
+            // Display last save time
+            const lastSave = localStorage.getItem('last_save_time');
+            if (lastSave) {
+                const saveDate = new Date(lastSave);
+                const timeAgo = Math.floor((new Date() - saveDate) / 60000); // minutes ago
+                const lastSaveElement = document.getElementById('lastSaveTime');
+                if (lastSaveElement) {
+                    if (timeAgo < 1) {
+                        lastSaveElement.textContent = 'Just now';
+                    } else if (timeAgo < 60) {
+                        lastSaveElement.textContent = timeAgo + ' minutes ago';
+                    } else if (timeAgo < 1440) {
+                        lastSaveElement.textContent = Math.floor(timeAgo / 60) + ' hours ago';
+                    } else {
+                        lastSaveElement.textContent = saveDate.toLocaleDateString('en-GB') + ' at ' + saveDate.toLocaleTimeString('en-GB');
+                    }
+                }
+            }
         };
     </script>
 </body>
