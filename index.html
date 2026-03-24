@@ -1156,6 +1156,8 @@ function cleanupPhantomRecords() {
     Object.keys(summaries).forEach(key => {
         const data = summaries[key];
         const isValidKey = validKeyPattern.test(key);
+        const keyYear = parseInt(key.split('-')[0]);
+        const isReasonableYear = keyYear >= 2025 && keyYear <= 2030;
         const hasRealData = (data.workedHours || 0) > 0 || 
                             (data.grossPay || 0) > 0 ||
                             (data.bankHolidays || 0) > 0 ||
@@ -1163,7 +1165,7 @@ function cleanupPhantomRecords() {
                             (data.employerDirectedHolidayHours || 0) > 0 ||
                             (data.proxyPay || 0) > 0;
         
-        if (!isValidKey || !hasRealData) {
+        if (!isValidKey || !isReasonableYear || !hasRealData) {
             removed.push(key);
             delete summaries[key];
         } else {
