@@ -443,7 +443,7 @@ function generateTimesheet() {
 
     for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
         const dow = d.getDay();
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         const dayName = d.toLocaleDateString('en-GB', { weekday: 'long' });
         const dayDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' });
         const isWeekend = (dow === 0 || dow === 6);
@@ -563,7 +563,7 @@ function updateTotals() {
 
     for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
         const dow = d.getDay();
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         const isWeekend = (dow === 0 || dow === 6);
         const dayHours = parseFloat(el('hours_' + dateStr)?.textContent || 0);
 
@@ -628,7 +628,7 @@ function updateTotals() {
 
     for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
         const dow = d.getDay(); // 0=Sun,1=Mon...6=Sat
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         const dayHours = parseFloat(el('hours_' + dateStr)?.textContent || 0);
 
         // New week starts on Monday
@@ -1092,7 +1092,7 @@ function generateCSV() {
     let csv = 'Date,Day,Time In,Time Out,Hours,Personal Holiday,Family Holiday,TOIL Usage,Comments\n';
     const firstDay = new Date(year, month - 1, 1), lastDay = new Date(year, month, 0);
     for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         const dayName = d.toLocaleDateString('en-GB', { weekday: 'long' });
         const dateFormat = d.toLocaleDateString('en-GB');
         const timeIn = el('timeIn_' + dateStr)?.value || '';
@@ -1207,7 +1207,7 @@ function printTimesheet() {
 
     for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
         const dow = d.getDay();
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         const dayName = d.toLocaleDateString('en-GB', { weekday: 'long' });
         const dayDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' });
         const isWeekend = dow === 0 || dow === 6;
