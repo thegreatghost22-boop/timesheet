@@ -95,9 +95,9 @@
                 <div>Days remaining this year</div>
             </div>
             <div class="info-box">
-                <h3>TOIL Balance</h3>
+                <h3>TOIL Credit</h3>
                 <div class="value"><span id="toilBalance">0</span></div>
-                <div>Hours available</div>
+                <div>Hours of credit available</div>
             </div>
             <div class="info-box">
                 <h3>Proxy Parenting</h3>
@@ -135,19 +135,24 @@
         <!-- TOIL -->
         <div class="toil-tracking-section">
             <h3 style="margin-top:0;color:#c2185b;">⏱️ TOIL (Time Off In Lieu) Management</h3>
+            <p style="font-size:12px;color:#555;margin:0 0 12px 0;">Wendy is paid for all hours including overtime each month. When she cannot work due to your circumstances, TOIL credit earned from previous overtime covers her contract pay. Enter non-working days in the timesheet rows using the Family Holiday column (no TOIL checkbox) — those hours are covered by the TOIL credit balance below.</p>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
                 <div>
-                    <strong>TOIL carried from previous month:</strong>
-                    <input type="number" id="toilFromPrevious" value="0" step="0.25" onchange="updateTotals();saveData();" style="width:60px;margin-left:5px;"> hrs<br>
-                    <small>Hours of TOIL debt brought forward</small>
+                    <strong>TOIL credit carried from previous month:</strong>
+                    <input type="number" id="toilFromPrevious" value="0" step="0.5" min="0" onchange="updateTotals();saveData();" style="width:60px;margin-left:5px;"> hrs<br>
+                    <small>Overtime hours earned in previous months available to offset non-working days this month. Each non-working day = 8hrs.</small>
                 </div>
                 <div>
-                    <strong>TOIL used this month:</strong> <span id="toilUsedThisMonth">0.00</span> hrs<br>
-                    <small>Time off taken using TOIL balance (enter in timesheet rows)</small>
+                    <strong>TOIL credit used this month:</strong> <span id="toilUsedThisMonth">0.00</span> hrs<br>
+                    <small>Hours drawn from TOIL credit to cover non-working days (family holiday rows)</small>
                 </div>
                 <div>
-                    <strong>Net TOIL to carry forward:</strong> <span id="toilToCarryForward">0.00</span> hrs<br>
-                    <small>Remaining debt after overtime offset</small>
+                    <strong>TOIL credit to carry forward:</strong> <span id="toilToCarryForward">0.00</span> hrs<br>
+                    <small>Remaining credit available for future non-working periods</small>
+                </div>
+                <div>
+                    <strong>Overtime earned this month:</strong> <span id="toilOvertimeEarned">0.00</span> hrs<br>
+                    <small>Added to TOIL credit balance for next month</small>
                 </div>
             </div>
         </div>
@@ -188,9 +193,8 @@
         </div>
 
         <div class="legend">
-            <span class="legend-item personal-holiday-cell"><strong>Personal Holiday</strong> — Wendy's choice</span>
-            <span class="legend-item family-holiday-cell"><strong>Family Holiday (no TOIL)</strong> — Employer-directed paid holiday, reduces entitlement &nbsp;|&nbsp; <strong>Family Holiday (TOIL ✓)</strong> — Creates TOIL debt, offset by overtime</span>
-            <span class="legend-item toil-usage-cell"><strong>TOIL Usage</strong> — Using accumulated TOIL balance</span>
+            <span class="legend-item personal-holiday-cell"><strong>Personal Holiday</strong> — Wendy's choice (reduces 28-day entitlement)</span>
+            <span class="legend-item family-holiday-cell"><strong>Family Holiday</strong> — Employer-directed non-working day, covered by TOIL credit (8hrs per day)</span>
             <span class="legend-item" style="background:#fff8dc;"><strong>🔸 Weekend</strong> — counts toward weekly 32hr threshold; hours over 32 that week = overtime</span>
         </div>
 
@@ -225,7 +229,7 @@
                     <th>Hours</th>
                     <th>Personal Holiday (hrs)</th>
                     <th>Family Holiday (hrs)</th>
-                    <th>TOIL Usage (hrs)</th>
+
                     <th>Comments</th>
                 </tr>
             </thead>
@@ -243,9 +247,9 @@
                     <small style="color:#666;">(Weekday over-contract + all weekend hours)</small>
                 </div>
                 <div>
-                    <strong>TOIL Offset Applied:</strong> <span id="toilOffset">0.00</span> hrs<br>
-                    <strong>Remaining Overtime (paid):</strong> <span id="remainingOvertime">0.00</span> hrs<br>
-                    <strong>Net TOIL to carry forward:</strong> <span id="toilCarryDisplay">0.00</span> hrs
+                    <strong>TOIL Credit Used This Month:</strong> <span id="toilOffset">0.00</span> hrs<br>
+                    <strong>Overtime Earned This Month:</strong> <span id="remainingOvertime">0.00</span> hrs<br>
+                    <strong>TOIL Credit to Carry Forward:</strong> <span id="toilCarryDisplay">0.00</span> hrs
                 </div>
                 <div>
                     <strong>Regular Pay:</strong> £<span id="regularPayDisplay">0.00</span><br>
@@ -545,7 +549,6 @@ function generateTimesheet() {
             <td class="week-total"><span id="weekTotal_${wn}">0.00</span></td>
             <td class="week-total"><span id="weekPersonalHol_${wn}">0.00</span></td>
             <td class="week-total"><span id="weekFamilyHol_${wn}">0.00</span></td>
-            <td class="week-total"><span id="weekToilUsage_${wn}">0.00</span></td>
             <td class="week-total"></td>`;
         tbody.appendChild(row);
     };
@@ -578,9 +581,8 @@ function generateTimesheet() {
                 <td class="personal-holiday-cell"><input type="number" class="time-input" id="personalHoliday_${dateStr}" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals();saveData();"></td>
                 <td class="family-holiday-cell">
                     <input type="number" class="time-input" id="familyHoliday_${dateStr}" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals();saveData();" style="width:50px;">
-                    <br><input type="checkbox" id="toilToggle_${dateStr}" onchange="updateTotals();saveData();"><label for="toilToggle_${dateStr}" style="font-size:10px;margin-left:2px;">TOIL</label>
                 </td>
-                <td class="toil-usage-cell"><input type="number" class="time-input" id="toilUsage_${dateStr}" min="0" max="8" step="0.25" placeholder="0" onchange="updateTotals();saveData();"></td>
+
                 <td><input type="text" id="comments_${dateStr}" placeholder="Notes..." style="width:100%;border:none;background:transparent;" onchange="saveData();"></td>`;
         }
         tbody.appendChild(row);
@@ -653,7 +655,7 @@ function updateTotals() {
     let totalFamilyHolidayHours = 0;
     let totalEmployerDirectedHolidayHours = 0;
     let totalToilCreatingHours = 0;
-    let totalToilUsageHours = 0;
+
 
     // Week tracking
     let weekTotals = {};
@@ -661,17 +663,15 @@ function updateTotals() {
     let currentWeekDates = [];
 
     const processWeek = (wn, dates) => {
-        let wh = 0, wph = 0, wfh = 0, wtu = 0;
+        let wh = 0, wph = 0, wfh = 0;
         dates.forEach(ds => {
             wh += parseFloat(el('hours_' + ds)?.textContent || 0);
             wph += parseFloat(el('personalHoliday_' + ds)?.value || 0);
             wfh += parseFloat(el('familyHoliday_' + ds)?.value || 0);
-            wtu += parseFloat(el('toilUsage_' + ds)?.value || 0);
         });
         setText('weekTotal_' + wn, wh.toFixed(2));
         setText('weekPersonalHol_' + wn, wph.toFixed(2));
         setText('weekFamilyHol_' + wn, wfh.toFixed(2));
-        setText('weekToilUsage_' + wn, wtu.toFixed(2));
     };
 
     for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
@@ -686,19 +686,12 @@ function updateTotals() {
         if (!isWeekend) {
             const dayPersonalHol = parseFloat(el('personalHoliday_' + dateStr)?.value || 0);
             const dayFamilyHol = parseFloat(el('familyHoliday_' + dateStr)?.value || 0);
-            const dayToilUsage = parseFloat(el('toilUsage_' + dateStr)?.value || 0);
-            const isToilCreating = el('toilToggle_' + dateStr)?.checked || false;
-
             totalPersonalHolidayHours += dayPersonalHol;
             totalFamilyHolidayHours += dayFamilyHol;
-            totalToilUsageHours += dayToilUsage;
 
+            // All family holiday is employer-directed, covered by TOIL credit
             if (dayFamilyHol > 0) {
-                if (isToilCreating) {
-                    totalToilCreatingHours += dayFamilyHol;
-                } else {
-                    totalEmployerDirectedHolidayHours += dayFamilyHol;
-                }
+                totalEmployerDirectedHolidayHours += dayFamilyHol;
             }
         }
 
@@ -758,21 +751,26 @@ function updateTotals() {
     // Flush final partial week
     overtimeHours += Math.max(0, weeklyHoursAccumulator - CONTRACT_HOURS_PER_WEEK);
 
-    // TOIL calculations
-    const toilFromPrevious = parseFloat(el('toilFromPrevious')?.value || 0);
+    // TOIL credit calculations
+    // Wendy is paid for all hours including overtime each month.
+    // TOIL credit = overtime hours banked from previous months.
+    // Non-working days (family holiday rows, employer-directed) are covered by TOIL credit.
+    // Any remaining credit carries forward. New overtime this month adds to next month's credit.
+    const toilCreditFromPrevious = parseFloat(el('toilFromPrevious')?.value || 0);
     const currentBankHolidays = parseFloat(el('currentBankHolidays')?.value || 0);
-    const totalToilDebt = toilFromPrevious + totalToilCreatingHours;
-    const toilOffsetByOvertime = Math.min(overtimeHours, totalToilDebt);
-    const remainingOvertimeAfterToil = overtimeHours - toilOffsetByOvertime;
-    const remainingToilDebt = Math.max(0, totalToilDebt - toilOffsetByOvertime);
-    const netToilCarryForward = remainingToilDebt - totalToilUsageHours;
 
-    // Pay calculations — regular and overtime are both £23/hr per contract clause 6.2a
+    // Non-working days covered by TOIL credit (employer-directed family holiday hours)
+    const toilCreditUsed = totalEmployerDirectedHolidayHours; // 8hrs per non-working day
+    const toilCreditRemaining = Math.max(0, toilCreditFromPrevious - toilCreditUsed);
+    const netToilCarryForward = toilCreditRemaining + overtimeHours; // remaining credit + new OT earned
+
+    // Pay calculations — all hours paid at £23/hr, Wendy always receives full pay
     const regularHours = Math.max(0, totalWorkedHours - overtimeHours);
     const regularPay = regularHours * HOURLY_RATE;
-    const holidayPay = (totalPersonalHolidayHours + totalEmployerDirectedHolidayHours + totalToilUsageHours) * HOURLY_RATE;
-    const overtimePay = remainingOvertimeAfterToil * HOURLY_RATE;
+    const holidayPay = (totalPersonalHolidayHours + totalEmployerDirectedHolidayHours) * HOURLY_RATE;
+    const overtimePay = overtimeHours * HOURLY_RATE;
     const totalPay = (totalWorkedHours * HOURLY_RATE) + holidayPay; // Proxy paid separately
+    const remainingOvertimeAfterToil = overtimeHours; // All OT paid — shown for reference
 
     // Holiday balance
     const holidayBalance = calculateHolidayBalance(year, monthStr);
@@ -782,12 +780,13 @@ function updateTotals() {
     setText('totalHours', totalWorkedHours.toFixed(2));
     setText('contractHours', contractHours.toFixed(2));
     setText('overtimeHours', overtimeHours.toFixed(2));
-    setText('toilOffset', toilOffsetByOvertime.toFixed(2));
-    setText('remainingOvertime', remainingOvertimeAfterToil.toFixed(2));
+    setText('toilOffset', toilCreditUsed.toFixed(2));
+    setText('remainingOvertime', overtimeHours.toFixed(2));
     setText('toilCarryDisplay', netToilCarryForward.toFixed(2));
-    setText('toilUsedThisMonth', totalToilUsageHours.toFixed(2));
+    setText('toilUsedThisMonth', toilCreditUsed.toFixed(2));
     setText('toilToCarryForward', netToilCarryForward.toFixed(2));
     setText('toilBalance', netToilCarryForward.toFixed(2));
+    setText('toilOvertimeEarned', overtimeHours.toFixed(2));
 
     setText('personalHolidaysThisMonth', (totalPersonalHolidayHours / 6.4).toFixed(2));
     setText('employerDirectedThisMonth', (totalEmployerDirectedHolidayHours / 6.4).toFixed(2));
@@ -828,10 +827,8 @@ function updateTotals() {
             personalHolidayHours: totalPersonalHolidayHours,
             employerDirectedHolidayHours: totalEmployerDirectedHolidayHours,
             familyHolidayHours: totalFamilyHolidayHours,
-            toilCreatingHours: totalToilCreatingHours,
-            toilUsageHours: totalToilUsageHours,
             bankHolidays: currentBankHolidays,
-            toilBalance: netToilCarryForward,
+            toilBalance: netToilCarryForward,  // TOIL credit balance (positive = credit available)
             overtimeHours: overtimeHours,
             proxyPay: proxyTotalPay,
             grossPay: totalPay
@@ -1220,7 +1217,7 @@ function generateCSV() {
     const [yearStr, monthStr2] = monthStr.split('-');
     const year = parseInt(yearStr), month = parseInt(monthStr2);
     const monthName = new Date(year, month - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-    let csv = 'Date,Day,Time In,Time Out,Hours,Personal Holiday,Family Holiday,TOIL Usage,Comments\n';
+    let csv = 'Date,Day,Time In,Time Out,Hours,Personal Holiday,Family Holiday,Comments\n';
     const firstDay = new Date(year, month - 1, 1), lastDay = new Date(year, month, 0);
     for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
         const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -1231,9 +1228,8 @@ function generateCSV() {
         const hours = el('hours_' + dateStr)?.textContent || '0.00';
         const ph = el('personalHoliday_' + dateStr)?.value || '';
         const fh = el('familyHoliday_' + dateStr)?.value || '';
-        const tu = el('toilUsage_' + dateStr)?.value || '';
         const comments = (el('comments_' + dateStr)?.value || '').replace(/"/g, '""');
-        csv += `${dateFormat},${dayName},${timeIn},${timeOut},${hours},${ph},${fh},${tu},"${comments}"\n`;
+        csv += `${dateFormat},${dayName},${timeIn},${timeOut},${hours},${ph},${fh},"${comments}"\n`;
     }
     downloadFile(csv, 'text/csv', `Wendy_Ballard_Timesheet_${monthName.replace(' ', '_')}.csv`);
     showStatus('Monthly CSV exported.', 'success');
@@ -1347,7 +1343,6 @@ function printTimesheet() {
         const hours = el('hours_' + dateStr)?.textContent || '0.00';
         const ph = el('personalHoliday_' + dateStr)?.value || '';
         const fh = el('familyHoliday_' + dateStr)?.value || '';
-        const tu = el('toilUsage_' + dateStr)?.value || '';
         const comments = el('comments_' + dateStr)?.value || '';
 
         weekHours += parseFloat(hours) || 0;
@@ -1357,7 +1352,7 @@ function printTimesheet() {
 
         const rowStyle = isWeekend ? ' style="background:#fff8dc;"' : '';
         const dateLabel = isWeekend ? `<strong>${dayName}, ${dayDate} 🔸</strong>` : `${dayName}, ${dayDate}`;
-        rows += `<tr${rowStyle}><td style="text-align:left;">${dateLabel}</td><td>${timeIn}</td><td>${timeOut}</td><td>${hours}</td><td>${ph}</td><td>${fh}</td><td>${tu}</td><td>${comments}</td></tr>`;
+        rows += `<tr${rowStyle}><td style="text-align:left;">${dateLabel}</td><td>${timeIn}</td><td>${timeOut}</td><td>${hours}</td><td>${ph}</td><td>${fh}</td><td>${comments}</td></tr>`;
 
         currentWeekDates.push(dateStr);
         const isSunday = dow === 0, isLastDay = d.getTime() === lastDay.getTime(), isFriday = dow === 5;
@@ -1392,14 +1387,14 @@ function printTimesheet() {
 <style>body{font-family:Arial,sans-serif;margin:20px;font-size:11px;}h1{color:#2c3e50;text-align:center;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border:1px solid #000;padding:5px;text-align:center;font-size:10px;}th{background:#c9daf8;font-weight:bold;}.week-total{background:#d1ecf1;font-weight:bold;}.summary{margin-top:25px;border-top:2px solid #4CAF50;padding-top:15px;}.proxy{background:#fff3e0;border:1px solid #ff9800;padding:10px;border-radius:4px;margin-top:15px;}</style>
 </head><body>
 <h1>Wendy Ballard — Timesheet for ${monthName}</h1>
-<table><tr><th style="text-align:left;">Date</th><th>Time In</th><th>Time Out</th><th>Hours</th><th>Personal Hol.</th><th>Family Hol.</th><th>TOIL Usage</th><th>Comments</th></tr>
+<table><tr><th style="text-align:left;">Date</th><th>Time In</th><th>Time Out</th><th>Hours</th><th>Personal Hol.</th><th>Family Hol.</th><th>Comments</th></tr>
 ${rows}</table>
 ${overflowPrintRows}<div class="summary">
 <h3>Monthly Summary</h3>
 <p><strong>Total Hours Worked:</strong> ${totalHours}</p>
-<p><strong>TOIL carried from previous month:</strong> ${toilFrom} hrs</p>
+<p><strong>TOIL credit carried from previous month:</strong> ${toilFrom} hrs</p>
 <p><strong>Bank Holidays this month:</strong> ${bankHols} days</p>
-<p><strong>Net TOIL Balance to carry forward:</strong> ${toilBal} hrs</p>
+<p><strong>TOIL credit to carry forward:</strong> ${toilBal} hrs</p>
 <p><strong>Total Gross Pay (excl. proxy):</strong> £${totalPay}</p>
 <p><strong>Rate:</strong> £23.00/hour</p>
 </div>
