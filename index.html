@@ -788,8 +788,8 @@ function updateTotals() {
     setText('toilBalance', netToilCarryForward.toFixed(2));
     setText('toilOvertimeEarned', overtimeHours.toFixed(2));
 
-    setText('personalHolidaysThisMonth', (totalPersonalHolidayHours / 6.4).toFixed(2));
-    setText('employerDirectedThisMonth', (totalEmployerDirectedHolidayHours / 6.4).toFixed(2));
+    setText('personalHolidaysThisMonth', (totalPersonalHolidayHours / 8).toFixed(2));
+    setText('employerDirectedThisMonth', (totalEmployerDirectedHolidayHours / 8).toFixed(2));
     setText('bankHolidaysUsed', holidayBalance.bankHolidaysUsed.toFixed(1));
     setText('personalHolidaysUsed', holidayBalance.personalHolidaysUsed.toFixed(1));
     setText('employerDirectedUsed', holidayBalance.employerDirectedUsed.toFixed(1));
@@ -851,8 +851,8 @@ function calculateHolidayBalance(forYear, currentMonthStr) {
         if (monthYear !== year) return;
         const data = allData[month];
         bankHols += data.bankHolidays || 0;
-        personalHols += (data.personalHolidayHours || 0) / 6.4;
-        employerHols += (data.employerDirectedHolidayHours || 0) / 6.4;
+        personalHols += (data.personalHolidayHours || 0) / 8;
+        employerHols += (data.employerDirectedHolidayHours || 0) / 8;
     });
 
     // Also include current unsaved month if applicable
@@ -1009,8 +1009,8 @@ function updateDashboard() {
         const row = document.createElement('tr');
         row.innerHTML = `<td><a href="javascript:void(0)" onclick="switchToMonth('${month}')" style="color:#4CAF50;font-weight:bold;">${name}</a></td>
             <td>${(d.workedHours||0).toFixed(1)}</td>
-            <td>${((d.personalHolidayHours||0)/6.4).toFixed(2)}</td>
-            <td>${((d.familyHolidayHours||0)/6.4).toFixed(2)}</td>
+            <td>${((d.personalHolidayHours||0)/8).toFixed(2)}</td>
+            <td>${((d.familyHolidayHours||0)/8).toFixed(2)}</td>
             <td>${(d.bankHolidays||0).toFixed(1)}</td>
             <td>${(d.toilBalance||0).toFixed(1)}</td>
             <td>£${(d.proxyPay||0).toFixed(2)}</td>
@@ -1050,8 +1050,8 @@ function generateAnnualReport() {
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:15px;margin-bottom:25px;">';
     html += `<div class="card"><h4 style="margin:0 0 5px;">Total Hours</h4><div class="metric" style="font-size:1.4em;">${annualHours.toFixed(0)}</div></div>`;
     html += `<div class="card"><h4 style="margin:0 0 5px;">Gross Earnings</h4><div class="metric" style="font-size:1.4em;">£${annualEarnings.toFixed(0)}</div></div>`;
-    html += `<div class="card"><h4 style="margin:0 0 5px;">Personal Hol.</h4><div class="metric" style="font-size:1.4em;">${(annualPersonalHol/6.4).toFixed(1)}</div><p style="margin:0;font-size:12px;">days</p></div>`;
-    html += `<div class="card"><h4 style="margin:0 0 5px;">Family Hol.</h4><div class="metric" style="font-size:1.4em;">${(annualFamilyHol/6.4).toFixed(1)}</div><p style="margin:0;font-size:12px;">days</p></div>`;
+    html += `<div class="card"><h4 style="margin:0 0 5px;">Personal Hol.</h4><div class="metric" style="font-size:1.4em;">${(annualPersonalHol/8).toFixed(1)}</div><p style="margin:0;font-size:12px;">days</p></div>`;
+    html += `<div class="card"><h4 style="margin:0 0 5px;">Family Hol.</h4><div class="metric" style="font-size:1.4em;">${(annualFamilyHol/8).toFixed(1)}</div><p style="margin:0;font-size:12px;">days</p></div>`;
     html += `<div class="card"><h4 style="margin:0 0 5px;">Bank Hols</h4><div class="metric" style="font-size:1.4em;">${annualBankHols.toFixed(1)}</div><p style="margin:0;font-size:12px;">days</p></div>`;
     html += `<div class="card"><h4 style="margin:0 0 5px;">Proxy Pay</h4><div class="metric" style="font-size:1.4em;">£${annualProxy.toFixed(0)}</div></div>`;
     html += `<div class="card"><h4 style="margin:0 0 5px;">TOIL Balance</h4><div class="metric" style="font-size:1.4em;">${finalToil.toFixed(1)}</div><p style="margin:0;font-size:12px;">hours</p></div>`;
@@ -1063,8 +1063,8 @@ function generateAnnualReport() {
             html += `<tr>
                 <td><a href="javascript:void(0)" onclick="switchToMonth('${m.key}')" style="color:#4CAF50;font-weight:bold;">${m.month}</a></td>
                 <td>${(m.workedHours||0).toFixed(2)}</td>
-                <td>${((m.personalHolidayHours||0)/6.4).toFixed(2)}</td>
-                <td>${((m.familyHolidayHours||0)/6.4).toFixed(2)}</td>
+                <td>${((m.personalHolidayHours||0)/8).toFixed(2)}</td>
+                <td>${((m.familyHolidayHours||0)/8).toFixed(2)}</td>
                 <td>${(m.bankHolidays||0).toFixed(1)}</td>
                 <td>${(m.overtimeHours||0).toFixed(2)}</td>
                 <td>${(m.toilBalance||0).toFixed(1)}</td>
@@ -1102,8 +1102,8 @@ function updateDataOverview() {
             html += `<tr>
                 <td>${name}</td>
                 <td>${(d.workedHours||0).toFixed(2)}</td>
-                <td>${((d.personalHolidayHours||0)/6.4).toFixed(2)}</td>
-                <td>${((d.familyHolidayHours||0)/6.4).toFixed(2)}</td>
+                <td>${((d.personalHolidayHours||0)/8).toFixed(2)}</td>
+                <td>${((d.familyHolidayHours||0)/8).toFixed(2)}</td>
                 <td>${(d.toilBalance||0).toFixed(1)}</td>
                 <td>£${(d.proxyPay||0).toFixed(2)}</td>
                 <td>£${(d.grossPay||0).toFixed(2)}</td>
@@ -1206,7 +1206,7 @@ function exportAnnualCSV() {
         const d = allData[key];
         if (!d) continue;
         const name = new Date(key + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-        csv += `${name},${(d.workedHours||0).toFixed(2)},${((d.personalHolidayHours||0)/6.4).toFixed(2)},${((d.familyHolidayHours||0)/6.4).toFixed(2)},${(d.bankHolidays||0).toFixed(1)},${(d.toilBalance||0).toFixed(2)},${(d.overtimeHours||0).toFixed(2)},${(d.proxyPay||0).toFixed(2)},${(d.grossPay||0).toFixed(2)}\n`;
+        csv += `${name},${(d.workedHours||0).toFixed(2)},${((d.personalHolidayHours||0)/8).toFixed(2)},${((d.familyHolidayHours||0)/8).toFixed(2)},${(d.bankHolidays||0).toFixed(1)},${(d.toilBalance||0).toFixed(2)},${(d.overtimeHours||0).toFixed(2)},${(d.proxyPay||0).toFixed(2)},${(d.grossPay||0).toFixed(2)}\n`;
     }
     downloadFile(csv, 'text/csv', `Wendy_Ballard_Annual_${year}.csv`);
     showStatus('Annual CSV exported.', 'success');
