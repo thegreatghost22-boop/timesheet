@@ -177,7 +177,7 @@
                 </div>
                 <div>
                     <strong>Employer-directed this month:</strong> <span id="employerDirectedThisMonth">0.00</span> days<br>
-                    <small>Your choice, paid (family holiday without TOIL checkbox)</small>
+                    <small>Covered by TOIL credit — does not reduce 28-day entitlement</small>
                 </div>
             </div>
             <div style="margin-top:15px;padding:15px;background:white;border-radius:8px;border-left:4px solid #9c27b0;">
@@ -185,7 +185,7 @@
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px;">
                     <div>Bank Holidays: <strong><span id="bankHolidaysUsed">0.0</span> days</strong></div>
                     <div>Personal Holiday: <strong><span id="personalHolidaysUsed">0.0</span> days</strong></div>
-                    <div>Employer-Directed: <strong><span id="employerDirectedUsed">0.0</span> days</strong></div>
+                    <div>TOIL-Covered: <strong><span id="employerDirectedUsed">0.0</span> days</strong> <small style="color:#888;">(not from entitlement)</small></div>
                     <div style="color:#9c27b0;font-size:1.05em;">Total Used: <strong><span id="totalHolidaysUsed">0.0</span> days</strong></div>
                     <div style="color:#4CAF50;font-size:1.1em;">Remaining: <strong><span id="remainingHolidays">11.6</span> days</strong></div>
                 </div>
@@ -767,7 +767,8 @@ function updateTotals() {
     // Pay calculations — all hours paid at £23/hr, Wendy always receives full pay
     const regularHours = Math.max(0, totalWorkedHours - overtimeHours);
     const regularPay = regularHours * HOURLY_RATE;
-    const holidayPay = (totalPersonalHolidayHours + totalEmployerDirectedHolidayHours) * HOURLY_RATE;
+    // Family holiday covered by TOIL credit — only personal holiday reduces entitlement and generates holiday pay
+    const holidayPay = totalPersonalHolidayHours * HOURLY_RATE;
     const overtimePay = overtimeHours * HOURLY_RATE;
     const totalPay = (totalWorkedHours * HOURLY_RATE) + holidayPay; // Proxy paid separately
     const remainingOvertimeAfterToil = overtimeHours; // All OT paid — shown for reference
@@ -844,7 +845,7 @@ function calculateHolidayBalance(forYear, currentMonthStr) {
     const year = forYear || new Date().getFullYear();
     const entitlement = getAnnualEntitlement(year);
 
-    let bankHols = 0, personalHols = 0, employerHols = 0;
+    let bankHols = 0, personalHols = 0;
 
     Object.keys(allData).forEach(month => {
         const monthYear = parseInt(month.split('-')[0]);
@@ -852,7 +853,7 @@ function calculateHolidayBalance(forYear, currentMonthStr) {
         const data = allData[month];
         bankHols += data.bankHolidays || 0;
         personalHols += (data.personalHolidayHours || 0) / 8;
-        employerHols += (data.employerDirectedHolidayHours || 0) / 8;
+        // Family holiday covered by TOIL credit — does not reduce entitlement
     });
 
     // Also include current unsaved month if applicable
@@ -867,12 +868,12 @@ function calculateHolidayBalance(forYear, currentMonthStr) {
         }
     }
 
-    const totalUsed = bankHols + personalHols + employerHols;
+    const totalUsed = bankHols + personalHols;
     return {
         totalUsed,
         bankHolidaysUsed: bankHols,
         personalHolidaysUsed: personalHols,
-        employerDirectedUsed: employerHols,
+        employerDirectedUsed: 0,
         remaining: Math.max(0, entitlement - totalUsed)
     };
 }
@@ -1348,7 +1349,6 @@ function printTimesheet() {
         weekHours += parseFloat(hours) || 0;
         weekPH += parseFloat(ph) || 0;
         weekFH += parseFloat(fh) || 0;
-        weekTU += parseFloat(tu) || 0;
 
         const rowStyle = isWeekend ? ' style="background:#fff8dc;"' : '';
         const dateLabel = isWeekend ? `<strong>${dayName}, ${dayDate} 🔸</strong>` : `${dayName}, ${dayDate}`;
