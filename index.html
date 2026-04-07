@@ -151,6 +151,10 @@
                     <small>Remaining credit available for future non-working periods</small>
                 </div>
                 <div>
+                    <strong>Credit remaining after this month:</strong> <span id="toilCreditRemaining" style="font-size:1.1em;font-weight:bold;">0.00</span> hrs<br>
+                    <small id="toilCreditStatus" style="color:#4CAF50;">✅ Within credit limit</small>
+                </div>
+                <div>
                     <strong>Overtime earned this month:</strong> <span id="toilOvertimeEarned">0.00</span> hrs<br>
                     <small>Added to TOIL credit balance for next month</small>
                 </div>
@@ -761,6 +765,15 @@ function updateTotals() {
 
     // Non-working days covered by TOIL credit (employer-directed family holiday hours)
     const toilCreditUsed = totalEmployerDirectedHolidayHours; // 8hrs per non-working day
+
+    // Overdraw protection — warn if family holiday exceeds available TOIL credit
+    if (toilCreditUsed > toilCreditFromPrevious && toilCreditFromPrevious > 0) {
+        const overdrawAmt = (toilCreditUsed - toilCreditFromPrevious).toFixed(2);
+        showStatus(`⚠️ Warning: Family holiday hours (${toilCreditUsed.toFixed(2)}hrs) exceed available TOIL credit (${toilCreditFromPrevious.toFixed(2)}hrs) by ${overdrawAmt}hrs. Reduce family holiday entries or increase TOIL credit carried forward.`, 'error');
+    } else if (toilCreditUsed > toilCreditFromPrevious && toilCreditFromPrevious === 0) {
+        showStatus(`⚠️ Warning: Family holiday hours entered but no TOIL credit available. Either add TOIL credit from previous month or remove family holiday entries.`, 'error');
+    }
+
     const toilCreditRemaining = Math.max(0, toilCreditFromPrevious - toilCreditUsed);
     const netToilCarryForward = toilCreditRemaining + overtimeHours; // remaining credit + new OT earned
 
@@ -788,6 +801,27 @@ function updateTotals() {
     setText('toilToCarryForward', netToilCarryForward.toFixed(2));
     setText('toilBalance', netToilCarryForward.toFixed(2));
     setText('toilOvertimeEarned', overtimeHours.toFixed(2));
+
+    // Update credit remaining indicator
+    const creditRemainingEl = el('toilCreditRemaining');
+    const creditStatusEl = el('toilCreditStatus');
+    if (creditRemainingEl) {
+        const creditLeft = toilCreditFromPrevious - toilCreditUsed;
+        creditRemainingEl.textContent = Math.max(0, creditLeft).toFixed(2);
+        if (creditLeft < 0) {
+            creditRemainingEl.style.color = '#dc3545';
+            if (creditStatusEl) creditStatusEl.innerHTML = '❌ Overdrawn by ' + Math.abs(creditLeft).toFixed(2) + 'hrs — reduce family holiday entries';
+            if (creditStatusEl) creditStatusEl.style.color = '#dc3545';
+        } else if (creditLeft === 0 && toilCreditUsed > 0) {
+            creditRemainingEl.style.color = '#ff9800';
+            if (creditStatusEl) creditStatusEl.innerHTML = '⚠️ Credit fully used';
+            if (creditStatusEl) creditStatusEl.style.color = '#ff9800';
+        } else {
+            creditRemainingEl.style.color = '#4CAF50';
+            if (creditStatusEl) creditStatusEl.innerHTML = '✅ Within credit limit';
+            if (creditStatusEl) creditStatusEl.style.color = '#4CAF50';
+        }
+    }
 
     setText('personalHolidaysThisMonth', (totalPersonalHolidayHours / 8).toFixed(2));
     setText('employerDirectedThisMonth', (totalEmployerDirectedHolidayHours / 8).toFixed(2));
